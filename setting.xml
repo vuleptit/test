@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!-- Time in seconds -->
+<httppush resettime="3600">
+<alert1>
+    <repeat>3</repeat>
+    <timeinterval>180</timeinterval>
+    <disable>False</disable>
+    <alarmcoolingperiod interval="180" timetoactivate="90">True</alarmcoolingperiod>
+</alert1>
+<alert2>
+    <repeat>3</repeat>
+    <timeinterval>180</timeinterval>
+    <disable>False</disable>
+    <closemode>close</closemode>
+</alert2>
+<alert3>
+    <repeat>3</repeat>
+    <timeinterval>180</timeinterval>
+    <disable>False</disable>
+    <closemode>close</closemode>
+</alert3>
+<alert4>
+    <repeat>3</repeat>
+    <timeinterval>180</timeinterval>
+    <disable>False</disable>
+    <closemode>close</closemode>
+</alert4>
+<alert5>
+    <repeat>3</repeat>
+    <timeinterval>180</timeinterval>
+    <disable>False</disable>
+    <closemode>close</closemode>
+</alert5>
+</httppush>
