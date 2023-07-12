@@ -2,8 +2,8 @@ from xml.etree import ElementTree
 
 # find alert config by alert name
 def find_alert_config(element_tree: ElementTree, alert_name: str):
-    print(element_tree)
-    print(element_tree.getroot())
+    # print(element_tree)
+    # print(element_tree.getroot())
     alert_setting = element_tree.find(alert_name)
     settings = dict()
     for config in alert_setting:

@@ -8,7 +8,7 @@ def http_get_endpoint():
         request = requests.get(url=url)
         return request.status_code
     except Exception as ex:
-        print(exc_info())
+        return
 
 def http_post_endpoint():
     try:

@@ -59,17 +59,19 @@ class MiddlewareLog(Enum):
     ROTATION_FREQ = "S"
 
 # Alert status
-# class AlertStatus(Enum, str):
-#     OPEN_fOR_ALERT_1 = "open_1"
-#     PROCESSING_ALERT_1 = "proc_1"
-#     OPEN_fOR_ALERT_2 = "open_2"
-#     PROCESSING_ALERT_2 = "proc_2"
-#     OPEN_fOR_ALERT_3 = "open_3"
-#     PROCESSING_ALERT_3 = "proc_3"
-#     OPEN_fOR_ALERT_4 = "open_4"
-#     PROCESSING_ALERT_4 = "proc_4"
-#     OPEN_fOR_ALERT_5 = "open_5"
-#     PROCESSING_ALERT_5 = "proc_5"
+class AlertStatus(Enum):
+    OPEN_fOR_ALERT_1 = "open_1"
+    PROCESSING_ALERT_1 = "proc_1"
+    OPEN_fOR_ALERT_2 = "open_2"
+    PROCESSING_ALERT_2 = "proc_2"
+    OPEN_fOR_ALERT_3 = "open_3"
+    PROCESSING_ALERT_3 = "proc_3"
+    OPEN_fOR_ALERT_4 = "open_4"
+    PROCESSING_ALERT_4 = "proc_4"
+    OPEN_fOR_ALERT_5 = "open_5"
+    PROCESSING_ALERT_5 = "proc_5"
+    
+
     
     
     
