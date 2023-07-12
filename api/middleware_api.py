@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Request
 from business_rules.alert.alert_service import GetAlertConfig, GetAlertStatus
-from common.utils.http_helper import http_push_endpoint_post
 import logging
 from common.utils.scheduler_helper import myfunc, scheduler
 from datetime import datetime
@@ -18,18 +17,19 @@ async def get_set_redis():
         config = await GetAlertConfig()
         return config
     except Exception as ex:
-        raise HTTPException("Something went wrong") 
+        print(ex)
+        raise HTTPException(detail="Something went wrong", status_code=400) 
     
 @router.get('/endpoint')
 async def get_endpoint():
     try:
         data = data
     except Exception as ex:
-        raise HTTPException("Something went wrong") 
+        raise HTTPException(detail="Something went wrong", status_code=400) 
     
 @router.post('/endpoint/')
 async def post_endpoint():
     try:
         data = data
     except Exception as ex:
-        raise HTTPException("Something went wrong") 
+        raise HTTPException(detail="Something went wrong", status_code=400) 

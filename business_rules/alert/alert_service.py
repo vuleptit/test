@@ -9,7 +9,7 @@ async def GetAlertConfig():
         config_dict = literal_eval(config.decode('utf-8'))
         return config_dict
     except Exception as ex:
-        raise HTTPException("Something went wrong") 
+        raise HTTPException(detail="Something went wrong", status_code=400) 
 
 def GetAlertStatus():
     status = rd.get(ALERT_STATUS)
