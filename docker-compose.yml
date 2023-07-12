@@ -6,32 +6,34 @@ networks:
     attachable: true
 
 services:
-  redis:
-    image: redis:alpine
-    container_name: tankclean_redis
-    ports:
-      - '6379:6379'
-    networks:
-      wl-net:
-        aliases:
-          - tankclean_db
+    redis:
+      image: redis:alpine
+      container_name: tankclean_redis
+      ports:
+        - '6379:6379'
+      networks:
+        wl-net:
+          aliases:
+            - tankclean_db
 
-  backend:
-    container_name: tankclean_backend
-    build: ./
-    restart: always
-    command: uvicorn main:app --reload --host 0.0.0.0
-    env_file:
-      - .envs/.env
-    ports:
-      - "8665:8000"
-    environment:
-      - ./envs/.env
-    volumes:
-      - .:/backend
-    depends_on:
-      - redis
-    networks:
-      wl-net:
-        aliases:
-          - tankclean_backend
+    backend:
+      container_name: tankclean_backend
+      build: ./
+      restart: always
+      command: uvicorn main:app --reload --host 0.0.0.0
+      env_file:
+        - .envs/.env
+      ports:
+        - "8665:8000"
+      # environment:
+      #   - ./envs/.env
+      volumes:
+        - .:/backend
+      depends_on:
+        - redis
+      networks:
+        wl-net:
+          aliases:
+            - tankclean_backend
+
+    
