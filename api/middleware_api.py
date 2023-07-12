@@ -1,9 +1,10 @@
+import logging
 from fastapi import APIRouter, HTTPException, Response
 from business_rules.redis.connection import redis as rd
+from business_rules.alert.alert_service import GetAlertConfig, GetAlertStatus
 from ast import literal_eval
 from typing import Union
 from pydantic import BaseModel
-import logging
 
 
 logger = logging.getLogger('middleware')
@@ -42,3 +43,12 @@ async def post_endpoint(data: DataModel):
     except Exception as ex:
         print(ex)
         raise HTTPException("Something went wrong") 
+    
+@router.get('/process')
+async def process_alert():
+    try:
+        config = await GetAlertConfig()
+        alert_status = await GetAlertStatus()
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="Something went wrong")
+    
