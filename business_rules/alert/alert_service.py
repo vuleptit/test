@@ -1,6 +1,7 @@
 from business_rules.redis.connection import redis as rd
 from ast import literal_eval
 from common.const import ALERT_CONFIG, ALERT_STATUS
+from fastapi import HTTPException
 
 async def GetAlertConfig():
     try:
@@ -8,7 +9,7 @@ async def GetAlertConfig():
         config_dict = literal_eval(config.decode('utf-8'))
         return config_dict
     except Exception as ex:
-        print("((((((((((((((((((((ex))))))))))))))))))))")
+        raise HTTPException("Something went wrong") 
 
 def GetAlertStatus():
     status = rd.get(ALERT_STATUS)

@@ -15,19 +15,16 @@ async def get_set_redis():
     try:
         random_id = rand_id()
         scheduler.add_job(myfunc, 'interval', seconds=2, id=random_id, args=[random_id], next_run_time=datetime.now())
-        logger.info('Before getting alert config')
         config = await GetAlertConfig()
-        # logger.info('After getting alert config')
         return config
     except Exception as ex:
-        print(ex)
+        raise HTTPException("Something went wrong") 
     
 @router.get('/endpoint')
 async def get_endpoint():
     try:
         data = data
     except Exception as ex:
-        print(ex)
         raise HTTPException("Something went wrong") 
     
 @router.post('/endpoint/')
@@ -35,5 +32,4 @@ async def post_endpoint():
     try:
         data = data
     except Exception as ex:
-        print(ex)
         raise HTTPException("Something went wrong") 
