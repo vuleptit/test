@@ -4,6 +4,7 @@ from business_rules.redis.connection import redis as rd
 from sys import exc_info
 from os.path import dirname, join, abspath
 from common.const import XML_CONFIG_FILE_NAME
+import pickle
 
 # get xml configration in a python dict
 def get_configuration_dict():
@@ -23,7 +24,7 @@ def get_configuration_dict():
 async def save_configuration():
     try:
         alert_dict = get_configuration_dict()
-        await rd.set('alert', str(alert_dict))
+        await rd.set('alert', pickle.dumps(alert_dict))
     except Exception as ex:
         print(exc_info())
 

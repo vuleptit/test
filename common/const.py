@@ -37,8 +37,17 @@ class AlertName(Enum):
     ALERT4 = 'alert4'
     ALERT5 = 'alert5'
 
-ALERT_CONFIG = 'alert'
-ALERT_STATUS = 'status'
+# Redis object name
+ALERT_CONFIG_OBJ = 'alert'
+class AlertStatusObject(str, Enum):
+    CURRENT = "alert_status_current"
+    ALERT1 = "alert1_status"
+    ALERT2 = "alert2_status"
+    ALERT3 = "alert3_status"
+    ALERT5 = "alert4_status"
+    ALERT4 = "alert5_status"
+    
+COOLING_PERIOD_OBJ = "cool_period"
 
 et = ET.parse(XML_CONFIG_FILE_NAME)
 COOLING_PERIOD = find_all_alert_config_attributes(element_tree=et, 
@@ -59,19 +68,6 @@ class MiddlewareLog(Enum):
     ROTATION_FREQ = "S"
 
 # Alert status
-class AlertStatus(Enum):
-    OPEN_fOR_ALERT_1 = "open_1"
-    PROCESSING_ALERT_1 = "proc_1"
-    OPEN_fOR_ALERT_2 = "open_2"
-    PROCESSING_ALERT_2 = "proc_2"
-    OPEN_fOR_ALERT_3 = "open_3"
-    PROCESSING_ALERT_3 = "proc_3"
-    OPEN_fOR_ALERT_4 = "open_4"
-    PROCESSING_ALERT_4 = "proc_4"
-    OPEN_fOR_ALERT_5 = "open_5"
-    PROCESSING_ALERT_5 = "proc_5"
-    
-
-    
-    
-    
+class AlertStatus(str, Enum):
+    OPEN = 'open'
+    PROCESSING = 'processing'
