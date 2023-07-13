@@ -5,34 +5,37 @@ from business_rules.redis.connection import redis as rd
 from business_rules.alert.alert_service import ProcessAlertOne, test_redis, GetCurentStatus
 from pydantic import BaseModel
 
+from fastapi import APIRouter, HTTPException, Request
+from business_rules.alert.alert_service import GetAlertConfig, GetAlertStatus
+import logging
+from common.utils.scheduler_helper import myfunc, scheduler
+from datetime import datetime
+from common.utils.random_helper import rand_id
 
 logger = logging.getLogger('middleware')
-
-class DataModel(BaseModel):
-    code: int
-    class Config:
-        orm_mode = True
 
 router = APIRouter()
 
 @router.get('/')
 async def get_set_redis():
     try:
-        logger.info('Before getting alert config')
-        config = await rd.get('alert')
-        logger.info('After getting alert config')
-    except Exception as ex:
+        random_id = rand_id()
+        scheduler.add_job(myfunc, 'interval', seconds=2, id=random_id, args=[random_id], next_run_time=datetime.now())
+        config = await GetAlertConfig()
         return config
-
+    except Exception as ex:
+        print(ex)
+        raise HTTPException(detail="Something went wrong", status_code=400) 
+    
 @router.get('/endpoint')
-async def get_endpoint(data: DataModel):
+async def get_endpoint():
     try:
         data = data
     except Exception as ex:
-        raise HTTPException("Something went wrong")
-
+        raise HTTPException(detail="Something went wrong", status_code=400) 
+    
 @router.post('/endpoint/')
-async def post_endpoint(data: DataModel):
+async def post_endpoint():
     try:
         data = data
     except Exception as ex:
