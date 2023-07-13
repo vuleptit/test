@@ -1,7 +1,8 @@
 import logging
 from fastapi import APIRouter, HTTPException, Response
 from business_rules.redis.connection import redis as rd
-from business_rules.alert.alert_service import GetAlertConfig, GetAlertStatus, SetAlertStatus, ProcessAlertOne, test_redis
+# from common.const import AlertStatusObject
+from business_rules.alert.alert_service import ProcessAlertOne, test_redis, GetCurentStatus
 from pydantic import BaseModel
 
 
@@ -51,7 +52,7 @@ async def test():
     result = await test_redis()
     return result
 
-@router.get('/test_service_function')
+@router.get('/test-service-function')
 async def test():
-    result = await test_redis()
+    result = await GetCurentStatus("abc")
     return result

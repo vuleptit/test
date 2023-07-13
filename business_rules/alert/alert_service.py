@@ -1,10 +1,9 @@
 from business_rules.redis.connection import redis as rd
 from ast import literal_eval
-from common.const import ALERT_CONFIG_OBJ, AlertStatus, AlertName, COOLING_PERIOD_OBJ, COOLING_PERIOD, AlertStatusObject
+from common.const import ALERT_CONFIG_OBJ, AlertStatus, AlertName, COOLING_PERIOD_OBJ, COOLING_PERIOD, CURRENT_STATUS
 from fastapi import HTTPException
 from fastapi import status
 from common.utils.datetime_helper import GetCurrentTime, GetTimeAfterInterval
-import requests
 import pickle
 import datetime
 
@@ -14,40 +13,22 @@ async def GetAlertConfig():
         config_dict = literal_eval(config.decode('utf-8'))
         return config_dict
     except Exception as ex:
-        raise HTTPException(detail="Something went wrong", status_code=400)
+        raise HTTPException(detail="GetAlertConfig() not work", status_code=400)
 
-async def SetAlertStatus():
+async def SetAlertInitStatus():
     try:
-        result = await rd.set(AlertName.ALERT1.value, AlertStatus.OPEN_fOR_ALERT_1.value)
+        result = await rd.set(CURRENT_STATUS, AlertStatus.OPEN_1.value)
         return result
     except Exception as ex:
-        raise HTTPException(detail="Something went wrong", status_code=400)
+        raise HTTPException(detail="SetAlertInitStatus() not work", status_code=400)
 
-async def GetCurentStatus(alertname: AlertStatusObject):
+async def GetCurentStatus():
     try:
-        alert_status = await rd.get(AlertStatusObject)
+        alert_status = await rd.get(CURRENT_STATUS)
         return alert_status
     except Exception as ex:
-        raise HTTPException(detail="Something went wrong", status_code=400)
+        raise HTTPException(detail="GetCurentStatus() not work", status_code=400)
     
-async def GetAlertStatus():
-    try:
-        alert_status = await rd.get(AlertStatusObject)
-        return alert_status
-    except Exception as ex:
-        raise HTTPException(detail="Something went wrong", status_code=400)
-
-async def ProcessAlertOne(alert_status, data):
-    try:
-        if alert_status == AlertStatus.OPEN_fOR_ALERT_1.value:
-            # Do something instead of pass 
-            pass
-        else:
-            return
-        await rd.set(AlertStatusObject.ALERT1.value, AlertStatus.OPEN_fOR_ALERT_2.value)
-    except Exception as ex:
-        raise HTTPException(detail="Cannot process alert one", status_code=status.HTTP_400_BAD_REQUEST)
-
 async def SetCoolingPeriod():
     cooling_obj = pickle.dumps([GetCurrentTime(), COOLING_PERIOD])
     result = await rd.set(COOLING_PERIOD_OBJ, cooling_obj)
@@ -62,20 +43,32 @@ async def ProcessReady():
     except Exception as ex:
         raise HTTPException(detail="Process Ready is not working", status_code=status.HTTP_400_BAD_REQUEST)
     
-async def ProcessAlertTwo(alert_status, data):
+async def ProcessAlertOne(alert_status):
     try:
-        ready = ProcessReady()
-        if alert_status == AlertStatus.OPEN_fOR_ALERT_2.value and ready is True:
-            # First thing to do
-            await rd.set(ALERT_STATUS_OBJ, AL)
-            # Do something instead of pass
-            
-            # Need to change the state of alert
-            await rd.set(ALERT_STATUS_OBJ, AlertStatus.OPEN_fOR_ALERT_2.value)
+        if alert_status == AlertStatus.OPEN_1.value:
+            # Do something instead of pass 
             pass
+            # Set status when done
+            await rd.set(CURRENT_STATUS, AlertStatus.OPEN_2.value)
         else:
             return
         
+    except Exception as ex:
+        raise HTTPException(detail="ProcessAlertOne() not work", status_code=status.HTTP_400_BAD_REQUEST)
+    
+async def ProcessAlertTwo(alert_status):
+    try:
+        ready = ProcessReady()
+        if alert_status == AlertStatus.OPEN_2.value and ready is True:
+            # First thing to do
+            await rd.set(CURRENT_STATUS, AlertStatus.PROCESSING_2)
+            # Do something instead of pass
+            
+            # Need to change the state of alert
+            await rd.set(CURRENT_STATUS, AlertStatus.OPEN_2.value)
+            pass
+        else:
+            return
     except Exception as ex:
         raise HTTPException(detail="Cannot process alert one", status_code=status.HTTP_400_BAD_REQUEST)
     
@@ -93,6 +86,9 @@ async def test_redis():
         dict = pickle.loads(dict)
         time = await rd.get("time")
         time = pickle.loads(time)
+        test = await rd.get("shit")
+        print(type(test))
+        print(test)
         print(array)
         print(dict)
         print(time[0])
@@ -106,4 +102,11 @@ async def test_redis():
 
     
 
+# async def GetAlertStatus(alertname: AlertStatusObject):
+#     try:
+#         alert_status = await rd.get(alertname)
+#         return alert_status
+#     except Exception as ex:
+#         print(ex)
+#         raise HTTPException(detail="Something went wrong", status_code=400)
     
