@@ -1,5 +1,4 @@
 from enum import Enum
-from pydantic import str
 class Color(Enum):
     RED = 1
     GREEN = 2
@@ -9,3 +8,7 @@ def print_color(color: Color):
     print(color)
 
 print_color("ab")
+
+list = [1,2]
+a,b = list
+print(a,b)

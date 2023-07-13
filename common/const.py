@@ -37,13 +37,31 @@ class AlertName(Enum):
     ALERT4 = 'alert4'
     ALERT5 = 'alert5'
 
+# Alert status
+class AlertStatus(str, Enum):
+    OPEN_1 = 'open1'
+    PROCESSING_1 = 'processing1'
+    OPEN_2 = 'open2'
+    PROCESSING_2 = 'processing2'
+    OPEN_3 = 'open3'
+    PROCESSING_3 = 'processing3'
+    OPEN_4 = 'open4'
+    PROCESSING_4 = 'processing4'
+    OPEN_5 = 'open5'
+    PROCESSING_5 = 'processing5'
+
+class StatusField(str, Enum):
+    STATUS = "status"
+    TRIGGER_TIME = "trigger_time"
+    COOLING = "cooling"
+
 # Redis object name
 ALERT_CONFIG_OBJ = 'alert'
 
 
 CURRENT_STATUS = "alert_status_current"
 
-    
+
 COOLING_PERIOD_OBJ = "cool_period"
 
 
@@ -60,8 +78,6 @@ TIME_TO_ACTIVATE_COOLING_PERIOD = find_all_alert_config_attributes(element_tree=
 COOLING_STATE = find_alert_config(element_tree=et,
                                    alert_name=AlertName.ALERT1.value, 
                                    alert_config = AlarmConfig.COOLING_PERIOD.value, )
-print(COOLING_STATE)
-
 
 # HTTP trigger
 LIMITED_TRIGGER = 3
@@ -71,15 +87,4 @@ class MiddlewareLog(Enum):
     INTERVAL = 3
     ROTATION_FREQ = "S"
 
-# Alert status
-class AlertStatus(str, Enum):
-    OPEN_1 = 'open1'
-    PROCESSING_1 = 'processing1'
-    OPEN_2 = 'open2'
-    PROCESSING_2 = 'processing2'
-    OPEN_3 = 'open3'
-    PROCESSING_3 = 'processing3'
-    OPEN_4 = 'open4'
-    PROCESSING_4 = 'processing4'
-    OPEN_5 = 'open5'
-    PROCESSING_5 = 'processing5'
+

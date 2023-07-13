@@ -2,7 +2,7 @@
 import requests
 from sys import exc_info
 
-def http_get_endpoint():
+def http_get_endpoint(url):
     try:
         url = ""
         request = requests.get(url=url)
@@ -10,7 +10,7 @@ def http_get_endpoint():
     except Exception as ex:
         return
 
-def http_post_endpoint():
+def http_post_endpoint(url, payload):
     try:
         url = ""
         payload = []
