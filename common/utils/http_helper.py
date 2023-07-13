@@ -4,16 +4,16 @@ from sys import exc_info
 
 def http_get_endpoint(url):
     try:
-        url = ""
+        url = url
         request = requests.get(url=url)
-        return request.status_code
+        return request
     except Exception as ex:
         return
 
 def http_post_endpoint(url, payload):
     try:
-        url = ""
-        payload = []
+        url = url
+        payload = payload
         request = requests.post(url=url, data=payload)
         return request.status_code
     except Exception as ex:

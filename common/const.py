@@ -1,7 +1,7 @@
 from enum import Enum
 import xml.etree.ElementTree as ET
 import os
-from common.utils.xml_helper import find_all_alert_config_attributes, find_alert_config
+from common.utils.xml_helper import find_alert_config_attributes, find_config, find_reset_time
 
 # Redis
 REDIS_PORT = '6379'
@@ -17,7 +17,8 @@ TEMPORARY_LOG_FILE_NAME = "tmp"
 
 # Directory name
 LOG_PATH = os.environ.get('LOG_DIRECTORY')
-
+print(LOG_PATH)
+# setting.xml comfig name 
 class AlarmConfig(Enum):
     COOLING_PERIOD = "alarmcoolingperiod"
     REPEAT = "repeat"
@@ -36,6 +37,8 @@ class AlertName(Enum):
     ALERT3 = 'alert3'
     ALERT4 = 'alert4'
     ALERT5 = 'alert5'
+
+
 
 # Alert status
 class AlertStatus(str, Enum):
@@ -67,20 +70,54 @@ COOLING_PERIOD_OBJ = "cool_period"
 
 # XML ET TREE
 et = ET.parse(XML_CONFIG_FILE_NAME)
-COOLING_PERIOD = find_all_alert_config_attributes(element_tree=et, 
-                                                  alert_name=AlertName.ALERT1.value, 
-                                                  alert_config = AlarmConfig.COOLING_PERIOD.value, 
-                                                  alert_attr=AlarmCoolingPeriod.INTERVAL.value)
-TIME_TO_ACTIVATE_COOLING_PERIOD = find_all_alert_config_attributes(element_tree=et,
-                                                                   alert_name=AlertName.ALERT1.value, 
-                                                                   alert_config = AlarmConfig.COOLING_PERIOD.value, 
-                                                                   alert_attr=AlarmCoolingPeriod.TIME_TO_ACTIVATE.value)
-COOLING_STATE = find_alert_config(element_tree=et,
-                                   alert_name=AlertName.ALERT1.value, 
-                                   alert_config = AlarmConfig.COOLING_PERIOD.value, )
 
-# HTTP trigger
-LIMITED_TRIGGER = 3
+COOLING_PERIOD = find_alert_config_attributes(element_tree = et, 
+                                                  alert_name = AlertName.ALERT1.value, 
+                                                  alert_config = AlarmConfig.COOLING_PERIOD.value, 
+                                                  alert_attr = AlarmCoolingPeriod.INTERVAL.value)
+COOLING_TIME = find_alert_config_attributes(element_tree = et,
+                                            alert_name = AlertName.ALERT1.value, 
+                                            alert_config = AlarmConfig.COOLING_PERIOD.value, 
+                                            alert_attr = AlarmCoolingPeriod.TIME_TO_ACTIVATE.value)
+COOLING_STATE = find_config(element_tree = et,
+                            alert_name = AlertName.ALERT1.value,
+                            alert_config = AlarmConfig.COOLING_PERIOD.value)
+print(COOLING_STATE)
+
+TIME_TO_RESET_CYCLE = find_reset_time(element_tree=et)
+print(TIME_TO_RESET_CYCLE)
+# HTTP trigger config
+LIMITED_TRIGGER_1 = int(find_config(element_tree=et,
+                                alert_name=AlertName.ALERT1.value,
+                                alert_config=AlarmConfig.REPEAT.value))
+LIMITED_TRIGGER_2 = int(find_config(element_tree=et,
+                                alert_name=AlertName.ALERT2.value,
+                                alert_config=AlarmConfig.REPEAT.value))
+LIMITED_TRIGGER_3 = int(find_config(element_tree=et,
+                                alert_name=AlertName.ALERT3.value,
+                                alert_config=AlarmConfig.REPEAT.value))
+LIMITED_TRIGGER_4 = int(find_config(element_tree=et,
+                                alert_name=AlertName.ALERT4.value,
+                                alert_config=AlarmConfig.REPEAT.value))
+LIMITED_TRIGGER_5 = int(find_config(element_tree=et,
+                                alert_name=AlertName.ALERT5.value,
+                                alert_config=AlarmConfig.REPEAT.value))
+
+INTERVAL_1 = int(find_config(element_tree=et,
+                        alert_name=AlertName.ALERT1.value,
+                        alert_config=AlarmConfig.TIME_INTERVAL.value))
+INTERVAL_2 = int(find_config(element_tree=et,
+                        alert_name=AlertName.ALERT2.value,
+                        alert_config=AlarmConfig.TIME_INTERVAL.value))
+INTERVAL_3 = int(find_config(element_tree=et,
+                        alert_name=AlertName.ALERT3.value,
+                        alert_config=AlarmConfig.TIME_INTERVAL.value))
+INTERVAL_4 = int(find_config(element_tree=et,
+                        alert_name=AlertName.ALERT4.value,
+                        alert_config=AlarmConfig.TIME_INTERVAL.value))
+INTERVAL_5 = int(find_config(element_tree=et,
+                        alert_name=AlertName.ALERT5.value,
+                        alert_config=AlarmConfig.TIME_INTERVAL.value))
 
 # Logging
 class MiddlewareLog(Enum):
@@ -88,3 +125,5 @@ class MiddlewareLog(Enum):
     ROTATION_FREQ = "S"
 
 
+# Enpoint url
+ENDPOINT_URL = "https://api.covidtracking.com/v1/status.json"

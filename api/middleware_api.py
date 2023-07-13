@@ -1,78 +1,84 @@
 import logging
-from fastapi import APIRouter, HTTPException, Response
-from business_rules.redis.connection import redis as rd
-# from common.const import AlertStatusObject
-from business_rules.alert.alert_service import ProcessAlertOne, ProcessAlertTwo, GetCurentStatus, GetAlertConfig, SetAlertInitStatus
-from common.const import AlertStatus
-# from business_rules.alert.alert_service import test_redis
+from fastapi import APIRouter, HTTPException
+from business_rules.alert.alert_service import ProcessAlertOne, ProcessAlertTwo, GetCurentStatus, GetAlertConfig, \
+                                                SetAlertInitStatus, ProcessAlertThree, \
+                                                ProcessAlertFour, ProcessAlertFive
 import logging
-from common.utils.scheduler_helper import triggerhttp, scheduler, remove_status_obj
-from datetime import datetime
-from common.utils.random_helper import rand_id
 
 logger = logging.getLogger('middleware')
 
 router = APIRouter()
 
-@router.get('/')
-async def get_set_redis():
+@router.get("/receive-alert-1/{testid}")
+async def receive_alert_one(testid):
     try:
-        random_id = rand_id()
-        camid = random_id
-        scheduler.add_job(triggerhttp, 'interval', seconds=4, id=random_id, args=[(random_id, camid)])
+        # handleid
+        
+        #
+        await SetAlertInitStatus(id=testid)
+        status = await GetCurentStatus(id=testid)
+        logger.debug(f"Status id: {testid} - Current status {status}")
         config = await GetAlertConfig()
-        return config
+        result = await ProcessAlertOne(config=config, alert_status=status, id=testid)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_one not work")
+
+@router.get("/receive-alert-2/{testid}")
+async def receive_alert_two(testid):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurentStatus(id=testid)
+        config = await GetAlertConfig()
+        result = await ProcessAlertTwo(alert_status=status, config=config, id=testid)
+        return result
     except Exception as ex:
         print(ex)
-        raise HTTPException(detail="get_set_redis route not work", status_code=400) 
-
-@router.get('/endpoint')
-async def get_endpoint():
-    try:
-        data = data
-    except Exception as ex:
-        raise HTTPException(detail="Something went wrong", status_code=400)
-    
-@router.post('/endpoint/')
-async def post_endpoint():
-    try:
-        data = data
-    except Exception as ex:
-        raise HTTPException("Something went wrong")
-
-
-@router.get('/receive-alert-1')
-async def receive_alert_one():
-    # try:
-        random_id = rand_id()
-        camid = random_id
-        status = await SetAlertInitStatus(id=camid)
-        # should use camid
-        status = await GetCurentStatus(id=camid)
-        
-        # scheduler.add_job(triggerhttp, 'interval', seconds=2, id=random_id, args=[(random_id, camid)], next_run_time=datetime.now()) # next_run_time=datetime.now()
-        
-        # job to remove object
-        scheduler.add_job(remove_status_obj, 'interval', seconds=2, id=random_id, args=[(random_id, camid)])
-
-        config = await GetAlertConfig()
-        
-        result = await ProcessAlertOne(config=config, alert_status=status, id=random_id)
-        return result
-    # except Exception as ex:
-        
-    #     raise HTTPException(status_code=400, detail="receive_alert_one not work")
-
-@router.get('/receive-alert-2')
-async def receive_alert_two():
-    try:
-        result = await ProcessAlertTwo()
-        return result
-    except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_two not work")
 
+@router.get("/receive-alert-3/{testid}")
+async def receive_alert_three(testid):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurentStatus(id=testid)
+        config = await GetAlertConfig()
+        result = await ProcessAlertThree(alert_status=status, config=config, id=testid)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_3 not work")
 
-@router.get('/test-service-function')
+@router.get("/receive-alert-4/{testid}")
+async def receive_alert_four(testid):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurentStatus(id=testid)
+        config = await GetAlertConfig()
+        result = await ProcessAlertFour(alert_status=status, config=config, id=testid)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_4 not work")
+
+@router.get("/receive-alert-5/{testid}")
+async def receive_alert_five(testid):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurentStatus(id=testid)
+        config = await GetAlertConfig()
+        result = await ProcessAlertFive(alert_status=status, config=config, id=testid)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_5 not work")
+
+
+@router.get("/test-service-function")
 async def test():
     result = await GetCurentStatus()
     return result

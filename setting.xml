@@ -9,25 +9,25 @@
 </alert1>
 <alert2>
     <repeat>3</repeat>
-    <timeinterval>180</timeinterval>
+    <timeinterval>170</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert2>
 <alert3>
     <repeat>3</repeat>
-    <timeinterval>180</timeinterval>
+    <timeinterval>160</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert3>
 <alert4>
-    <repeat>3</repeat>
-    <timeinterval>180</timeinterval>
+    <repeat>2</repeat>
+    <timeinterval>150</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert4>
 <alert5>
-    <repeat>3</repeat>
-    <timeinterval>180</timeinterval>
+    <repeat>1</repeat>
+    <timeinterval>140</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert5>

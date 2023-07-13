@@ -12,3 +12,7 @@ print_color("ab")
 list = [1,2]
 a,b = list
 print(a,b)
+
+if '' == None:
+    print(True)
+else: print(False)
