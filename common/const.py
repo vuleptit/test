@@ -121,13 +121,13 @@ CLOSEMODE_2 = str(find_config(element_tree=et,
                         alert_name=AlertName.ALERT2.value,
                         alert_config=AlarmConfig.CLOSEMODE.value))
 CLOSEMODE_3 = str(find_config(element_tree=et,
-                        alert_name=AlertName.ALERT2.value,
+                        alert_name=AlertName.ALERT3.value,
                         alert_config=AlarmConfig.CLOSEMODE.value))
 CLOSEMODE_4 = str(find_config(element_tree=et,
-                        alert_name=AlertName.ALERT2.value,
+                        alert_name=AlertName.ALERT4.value,
                         alert_config=AlarmConfig.CLOSEMODE.value))
 CLOSEMODE_5 = str(find_config(element_tree=et,
-                        alert_name=AlertName.ALERT2.value,
+                        alert_name=AlertName.ALERT5.value,
                         alert_config=AlarmConfig.CLOSEMODE.value))
 
 # Logging

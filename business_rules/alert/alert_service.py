@@ -49,6 +49,8 @@ async def GetCoolingPeriod(id):
 async def ProcessReady(id):
     try:
         cooling_per = await GetCoolingPeriod(id=id)
+        if cooling_per is None:
+            return True
         logger.debug(f"Cooling period: {cooling_per}, type: {type(cooling_per)}")
 
         start, time = await GetCoolingPeriod(id=id)
@@ -66,7 +68,6 @@ async def GetCurentStatus(id):
         current_status_obj = CURRENT_STATUS + str(id)
         alert_status = await rd.hget(current_status_obj, StatusField.STATUS.value)
         if alert_status is None:
-            logger.info("---------- Prepare to set initial status object for a new cycle ----------")
             return alert_status
         # Decode byte value to string
         alert_status = alert_status.decode("utf-8")
@@ -99,9 +100,7 @@ async def ProcessAlertTwo(alert_status, config, id):
         cur = await GetCurentStatus(id=id)
         logger.debug(f"BEGIN PROCESS 2: Status id: {id} - Current status {cur}")
         if CLOSEMODE_2 == "close":
-            #update next status and return
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_3.value)
-            return "Alert 2 is close, open alert 3"
+            return "Alert 2 is in closemode"
             
         if alert_status == AlertStatus.OPEN_2.value and ready is True:
             # First thing to do
@@ -124,9 +123,7 @@ async def ProcessAlertThree(alert_status, config, id):
         logger.debug(f"BEGIN PROCESS 3: Status id: {id} - Current status {cur}")
         
         if CLOSEMODE_3 == "close":
-            #update next status and return
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_4.value)
-            return "Alert 3 is close, open alert 4"
+            return "Alert 3 is in closemode"
         
         if alert_status == AlertStatus.OPEN_3.value and ready is True:
             # First thing to do
@@ -149,9 +146,7 @@ async def ProcessAlertFour(alert_status, config, id):
         logger.debug(f"BEGIN PROCESS 4: Status id: {id} - Current status {cur}")
         
         if CLOSEMODE_4 == "close":
-            #update next status and return
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_5.value)
-            return "Alert 4 is close, open alert 5"
+            return "Alert 4 is in closemode"
         
         if alert_status == AlertStatus.OPEN_4.value and ready is True:
             # First thing to do
@@ -174,9 +169,7 @@ async def ProcessAlertFive(alert_status, config, id):
         logger.debug(f"BEGIN PROCESS 5: Status id: {id} - Current status {cur}")
         
         if CLOSEMODE_5 == "close":
-            #update next status and return
-            
-            return "Alert 5 is close, end process"
+            return "Alert 5 is in closemode"
         
         if alert_status == AlertStatus.OPEN_5.value and ready is True:
             # First thing to do

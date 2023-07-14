@@ -102,13 +102,13 @@ async def TriggerHTTP(data):
                 # await SetCoolingPeriod(id=camid)
                 logger.debug("------------------")
                 # next_status = AlertStatus.OPEN_2.value
-                next_status = GetNextStatus(1)
+                next_status = await GetNextStatus(1)
             elif int(alert_num) == 2:
-                next_status = GetNextStatus(2)
+                next_status = await GetNextStatus(2)
             elif int(alert_num) == 3:
-                next_status = GetNextStatus(3)
+                next_status = await GetNextStatus(3)
             elif int(alert_num) == 4:
-                next_status = GetNextStatus(4)
+                next_status = await GetNextStatus(4)
             elif int(alert_num) == 5:
                 # Delete object when done job 5
                 await RemoveStatusObject(id=camid, job_id=jobid)

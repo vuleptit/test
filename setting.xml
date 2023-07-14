@@ -6,7 +6,7 @@
     <timeinterval>3</timeinterval>
     <disable>False</disable>
     <!-- have not use time to activate yet -->
-    <alarmcoolingperiod interval="60" timetoactivate="90">True</alarmcoolingperiod>
+    <alarmcoolingperiod interval="10" timetoactivate="90">True</alarmcoolingperiod>
 </alert1>
 <alert2>
     <repeat>3</repeat>
