@@ -5,7 +5,7 @@
     <repeat>3</repeat>
     <timeinterval>180</timeinterval>
     <disable>False</disable>
-    <alarmcoolingperiod interval="10" timetoactivate="90">True</alarmcoolingperiod>
+    <alarmcoolingperiod interval="30" timetoactivate="90">True</alarmcoolingperiod>
 </alert1>
 <alert2>
     <repeat>3</repeat>

@@ -49,7 +49,7 @@ async def SetCoolingPeriod(id):
 async def GetCoolingPeriod(id):
     try:
         current_status_obj = CURRENT_STATUS + str(id)
-        result = await rd.hget(current_status_obj, StatusField.COOLING)
+        result = await rd.hget(current_status_obj, StatusField.COOLING.value)
         cooling_obj = pickle.loads(result)
         return cooling_obj
     except Exception as ex:
@@ -57,7 +57,7 @@ async def GetCoolingPeriod(id):
 
 async def ProcessReady(id):
     try:
-        cooling_per = await rd.hget(CURRENT_STATUS + str(id), StatusField.COOLING)
+        cooling_per = await rd.hget(CURRENT_STATUS + str(id), StatusField.COOLING.value)
         cooling_per = cooling_per.decode('utf-8')
         logger.debug(f"Cooling period: {cooling_per}, type: {type(cooling_per)}")
         if cooling_per is None or cooling_per == '':
@@ -90,7 +90,8 @@ async def ProcessAlertOne(alert_status, config, id):
             # job to remove object
             scheduler.add_job(remove_status_obj, 'date', run_date=GetTimeAfterSecond(GetCurrentTime(), TIME_TO_RESET_CYCLE), args=[id])
             # Set status when done
-            return "done process alert one - maybe still triggering"
+            SetCoolingPeriod(id=id)
+            return "done process alert one - maybe still triggering - turned on cooling period"
         else:
             return HTTPException(detail="Alert one not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
