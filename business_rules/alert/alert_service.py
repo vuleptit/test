@@ -24,6 +24,9 @@ async def GetAlertConfig():
 
 async def SetAlertInitStatus(id):
     try:
+        alert_status = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
+        if alert_status is not None or alert_status != '':
+            return HTTPException(detail="Alert one not open", status_code=status.HTTP_400_BAD_REQUEST)
         current_status_obj = CURRENT_STATUS + str(id)
         await rd.hset(current_status_obj, StatusField.STATUS.value, AlertStatus.OPEN_1.value)
         await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, 0)
@@ -105,10 +108,8 @@ async def ProcessAlertTwo(alert_status, config, id):
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_2.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, 2)]) # next_run_time=datetime.now()
-
-            # Need to change the state of alert
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_3.value)
+            scheduler.add_job(triggerhttp, 'interval', seconds=3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, 2)]) # next_run_time=datetime.now()
+        
             return "done process alert two - maybe still triggering"
         else:
             return HTTPException(detail="Alert two not open", status_code=status.HTTP_400_BAD_REQUEST)
@@ -128,10 +129,8 @@ async def ProcessAlertThree(alert_status, config, id):
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_3.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, 3)]) # next_run_time=datetime.now()
-
-            # Need to change the state of alert
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_4.value)
+            scheduler.add_job(triggerhttp, 'interval', seconds=3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, 3)]) # next_run_time=datetime.now()
+            
             return "done process alert three - maybe still triggering"
         else:
             return HTTPException(detail="Alert 3 not open", status_code=status.HTTP_400_BAD_REQUEST)
@@ -150,10 +149,8 @@ async def ProcessAlertFour(alert_status, config, id):
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_4.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, 4)]) # next_run_time=datetime.now()
+            scheduler.add_job(triggerhttp, 'interval', seconds=3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, 4)]) # next_run_time=datetime.now()
 
-            # Need to change the state of alert
-            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_5.value)
             return "done process alert four - maybe still triggering"
         else:
             return HTTPException(detail="Alert 4 not open", status_code=status.HTTP_400_BAD_REQUEST)
@@ -172,9 +169,8 @@ async def ProcessAlertFive(alert_status, config, id):
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_5.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, 5)]) # next_run_time=datetime.now()
-            # Delete object when done job
-            await rd.delete(CURRENT_STATUS + str(id))
+            scheduler.add_job(triggerhttp, 'interval', seconds=3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, 5)]) # next_run_time=datetime.now()
+    
             return "done process alert five - maybe still triggering"
         else:
             return HTTPException(detail="Alert 5 not open", status_code=status.HTTP_400_BAD_REQUEST)

@@ -20,13 +20,13 @@
     <closemode>close</closemode>
 </alert3>
 <alert4>
-    <repeat>2</repeat>
+    <repeat>3</repeat>
     <timeinterval>150</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert4>
 <alert5>
-    <repeat>1</repeat>
+    <repeat>3</repeat>
     <timeinterval>140</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>

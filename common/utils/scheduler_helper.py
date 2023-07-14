@@ -38,16 +38,20 @@ async def triggerhttp(data):
             print("ok")
         
         if update_trigger_time >= limited:
-            if alert_num == 1:
+            if int(alert_num) == 1:
                 next_status = AlertStatus.OPEN_2.value
-            elif alert_num == 2:
+            elif int(alert_num) == 2:
                 next_status = AlertStatus.OPEN_3.value
-            elif alert_num == 3:
+            elif int(alert_num) == 3:
+                next_status = AlertStatus.OPEN_4.value
+            elif int(alert_num) == 4:
                 next_status = AlertStatus.OPEN_5.value
-            elif alert_num == 4:
-                next_status = AlertStatus.OPEN_5.value
-            elif alert_num == 5:
+            elif int(alert_num) == 5:
                 next_status = AlertStatus.OPEN_1.value
+                # Delete object when done job 5
+                await rd.delete(CURRENT_STATUS + str(id))
+                scheduler.remove_job(job_id=jobid)
+                
             await rd.hset(CURRENT_STATUS + str(camid), StatusField.STATUS.value, next_status)
             await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, 0)
             scheduler.remove_job(job_id=jobid)
@@ -55,7 +59,6 @@ async def triggerhttp(data):
         cur = await rd.hget(CURRENT_STATUS + str(camid), StatusField.STATUS.value)
         logger.debug(f"END TRIGGER HTTP trigger time: {update_trigger_time} - Status id: {camid} - Current status {cur}")
             
-        
     except Exception as ex:
         raise HTTPException(detail="triggerhttp not work", status_code=400)
         
