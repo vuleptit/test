@@ -3,31 +3,32 @@
 <httppush resettime="3600">
 <alert1>
     <repeat>3</repeat>
-    <timeinterval>180</timeinterval>
+    <timeinterval>3</timeinterval>
     <disable>False</disable>
-    <alarmcoolingperiod interval="30" timetoactivate="90">True</alarmcoolingperiod>
+    <!-- have not use time to activate yet -->
+    <alarmcoolingperiod interval="60" timetoactivate="90">True</alarmcoolingperiod>
 </alert1>
 <alert2>
     <repeat>3</repeat>
-    <timeinterval>170</timeinterval>
+    <timeinterval>3</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert2>
 <alert3>
     <repeat>3</repeat>
-    <timeinterval>160</timeinterval>
+    <timeinterval>3</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert3>
 <alert4>
     <repeat>3</repeat>
-    <timeinterval>150</timeinterval>
+    <timeinterval>3</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert4>
 <alert5>
     <repeat>3</repeat>
-    <timeinterval>140</timeinterval>
+    <timeinterval>3</timeinterval>
     <disable>False</disable>
     <closemode>close</closemode>
 </alert5>

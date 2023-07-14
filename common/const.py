@@ -17,7 +17,6 @@ TEMPORARY_LOG_FILE_NAME = "tmp"
 
 # Directory name
 LOG_PATH = os.environ.get('LOG_DIRECTORY')
-print(LOG_PATH)
 # setting.xml comfig name 
 class AlarmConfig(Enum):
     COOLING_PERIOD = "alarmcoolingperiod"
@@ -75,17 +74,16 @@ COOLING_PERIOD = find_alert_config_attributes(element_tree = et,
                                                   alert_name = AlertName.ALERT1.value, 
                                                   alert_config = AlarmConfig.COOLING_PERIOD.value, 
                                                   alert_attr = AlarmCoolingPeriod.INTERVAL.value)
-COOLING_TIME = find_alert_config_attributes(element_tree = et,
-                                            alert_name = AlertName.ALERT1.value, 
-                                            alert_config = AlarmConfig.COOLING_PERIOD.value, 
-                                            alert_attr = AlarmCoolingPeriod.TIME_TO_ACTIVATE.value)
+# COOLING_TIME = find_alert_config_attributes(element_tree = et,
+#                                             alert_name = AlertName.ALERT1.value, 
+#                                             alert_config = AlarmConfig.COOLING_PERIOD.value, 
+#                                             alert_attr = AlarmCoolingPeriod.TIME_TO_ACTIVATE.value)
 COOLING_STATE = find_config(element_tree = et,
                             alert_name = AlertName.ALERT1.value,
                             alert_config = AlarmConfig.COOLING_PERIOD.value)
-print(COOLING_STATE)
 
 TIME_TO_RESET_CYCLE = find_reset_time(element_tree=et)
-print(TIME_TO_RESET_CYCLE)
+
 # HTTP trigger config
 LIMITED_TRIGGER_1 = int(find_config(element_tree=et,
                                 alert_name=AlertName.ALERT1.value,
@@ -126,4 +124,4 @@ class MiddlewareLog(Enum):
 
 
 # Enpoint url
-ENDPOINT_URL = "https://api.covidtracking.com/v1/status.json"
+ENDPOINT_URL = "http://127.0.0.1:8665/trigger/free"

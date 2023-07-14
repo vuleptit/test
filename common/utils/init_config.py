@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from xml.etree import ElementTree
 import xml.etree.ElementTree as ET
 from business_rules.redis.connection import redis as rd
@@ -22,10 +23,7 @@ def get_configuration_dict():
 
 # save configuration into redis
 async def save_configuration():
-    try:
-        alert_dict = get_configuration_dict()
-        await rd.set(ALERT_CONFIG_OBJ, pickle.dumps(alert_dict))
-    except Exception as ex:
-        print(exc_info())
-
-
+    alert_dict = get_configuration_dict()
+    await rd.set(ALERT_CONFIG_OBJ, pickle.dumps(alert_dict))
+    
+        

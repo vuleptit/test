@@ -1,6 +1,7 @@
 # HTTP method to call to endpoint
 import requests
 from sys import exc_info
+from fastapi import HTTPException
 
 def http_get_endpoint(url):
     try:
@@ -8,7 +9,7 @@ def http_get_endpoint(url):
         request = requests.get(url=url)
         return request
     except Exception as ex:
-        return
+        return HTTPException(detail="requests failed", status_code=400)
 
 def http_post_endpoint(url, payload):
     try:
@@ -17,4 +18,4 @@ def http_post_endpoint(url, payload):
         request = requests.post(url=url, data=payload)
         return request.status_code
     except Exception as ex:
-        print(exc_info())
+        return HTTPException(detail="requests failed", status_code=400)
