@@ -2,12 +2,13 @@ from business_rules.redis.connection import redis as rd
 from common.const import ALERT_CONFIG_OBJ, AlertStatus, AlertName, COOLING_PERIOD_OBJ, COOLING_PERIOD, \
                         CURRENT_STATUS, StatusField, TIME_TO_RESET_CYCLE, \
                         INTERVAL_1, INTERVAL_2, INTERVAL_3, INTERVAL_4, INTERVAL_5, \
-                        LIMITED_TRIGGER_1, LIMITED_TRIGGER_2, LIMITED_TRIGGER_3, LIMITED_TRIGGER_4, LIMITED_TRIGGER_5
+                        LIMITED_TRIGGER_1, LIMITED_TRIGGER_2, LIMITED_TRIGGER_3, LIMITED_TRIGGER_4, LIMITED_TRIGGER_5, \
+                        CLOSEMODE_2, CLOSEMODE_3, CLOSEMODE_4, CLOSEMODE_5
 from fastapi import HTTPException
 from fastapi import status
 from common.utils.datetime_helper import GetCurrentTime, GetTimeAfterSecond
 from common.utils.random_helper import rand_id
-from common.utils.scheduler_helper import triggerhttp, scheduler, remove_status_obj
+from common.utils.scheduler_helper import TriggerHTTP, scheduler, remove_status_obj
 import logging
 import pickle
 import datetime
@@ -54,7 +55,7 @@ async def ProcessReady(id):
         logger.debug(f"COOLING: start {start}, time {time}")
         end_cooling = GetTimeAfterSecond(start=start, interval=int(time))
         logger.debug(f"end COOLING: {end_cooling}")
-        logger.debug(f"now {datetime.datetime.now}")
+        logger.debug(f"now {datetime.datetime.now()}")
         return end_cooling <= datetime.datetime.now()
     except Exception as ex:
         print(ex)
@@ -81,7 +82,7 @@ async def ProcessAlertOne(alert_status, config, id):
             
             # 1 is this alert name
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=INTERVAL_1, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_1, 1)], next_run_time=datetime.datetime.now()) # 
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_1, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_1, 1)], next_run_time=datetime.datetime.now()) # 
             # job to remove object
             scheduler.add_job(remove_status_obj, 'date', run_date=GetTimeAfterSecond(GetCurrentTime(), TIME_TO_RESET_CYCLE), args=[id])
             
@@ -97,13 +98,17 @@ async def ProcessAlertTwo(alert_status, config, id):
         logger.debug(f"Process ready : {ready}")
         cur = await GetCurentStatus(id=id)
         logger.debug(f"BEGIN PROCESS 2: Status id: {id} - Current status {cur}")
-        
+        if CLOSEMODE_2 == "close":
+            #update next status and return
+            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_3.value)
+            return "Alert 2 is close, open alert 3"
+            
         if alert_status == AlertStatus.OPEN_2.value and ready is True:
             # First thing to do
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_2.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=INTERVAL_2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, 2)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_2, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, 2)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
         
             return "done process alert two - maybe still triggering"
         else:
@@ -118,12 +123,17 @@ async def ProcessAlertThree(alert_status, config, id):
         cur = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
         logger.debug(f"BEGIN PROCESS 3: Status id: {id} - Current status {cur}")
         
+        if CLOSEMODE_3 == "close":
+            #update next status and return
+            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_4.value)
+            return "Alert 3 is close, open alert 4"
+        
         if alert_status == AlertStatus.OPEN_3.value and ready is True:
             # First thing to do
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_3.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=INTERVAL_3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, 3)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_3, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, 3)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
             
             return "done process alert three - maybe still triggering"
         else:
@@ -138,12 +148,17 @@ async def ProcessAlertFour(alert_status, config, id):
         cur = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
         logger.debug(f"BEGIN PROCESS 4: Status id: {id} - Current status {cur}")
         
+        if CLOSEMODE_4 == "close":
+            #update next status and return
+            await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.OPEN_5.value)
+            return "Alert 4 is close, open alert 5"
+        
         if alert_status == AlertStatus.OPEN_4.value and ready is True:
             # First thing to do
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_4.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=INTERVAL_4, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, 4)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_4, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, 4)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
 
             return "done process alert four - maybe still triggering"
         else:
@@ -158,46 +173,20 @@ async def ProcessAlertFive(alert_status, config, id):
         cur = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
         logger.debug(f"BEGIN PROCESS 5: Status id: {id} - Current status {cur}")
         
+        if CLOSEMODE_5 == "close":
+            #update next status and return
+            
+            return "Alert 5 is close, end process"
+        
         if alert_status == AlertStatus.OPEN_5.value and ready is True:
             # First thing to do
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_5.value)
             
             trigger_job_random_id = rand_id()
-            scheduler.add_job(triggerhttp, 'interval', seconds=INTERVAL_5, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, 5)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_5, id=trigger_job_random_id, args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, 5)], next_run_time=datetime.datetime.now()) # next_run_time=datetime.now()
     
             return "done process alert five - maybe still triggering"
         else:
             return HTTPException(detail="Alert 5 not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
         raise HTTPException(detail="Cannot process alert 5", status_code=status.HTTP_400_BAD_REQUEST)
-    
-
-    
-
-async def test_redis():
-    try:
-        # time = pickle.dumps([datetime.datetime.now(), 90])
-        # await rd.set("time", time)
-        # array = pickle.dumps([1,2])
-        # await rd.set("array", array)
-        # dict = pickle.dumps({'a':1})
-        # await rd.set("dict", dict)
-        # array = await rd.get("array")
-        # array = pickle.loads(array)
-        # dict = await rd.get("dict")
-        # dict = pickle.loads(dict)
-        # time = await rd.get("time")
-        # time = pickle.loads(time)
-        # test = await rd.get("shit")
-        # print(type(test))
-        # print(test)
-        # print(array)
-        # print(dict)
-        # print(time[0])
-        # print(type(time[0]))
-        test = await rd.hget("w","s")
-        print(test, type(test))
-        return
-    except Exception as ex:
-        print(ex)
-        raise HTTPException(detail="smth", status_code=status.HTTP_400_BAD_REQUEST)

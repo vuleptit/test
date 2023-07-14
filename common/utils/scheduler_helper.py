@@ -5,7 +5,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from time import sleep
 from common.utils.http_helper import http_post_endpoint, http_get_endpoint
 from business_rules.redis.connection import redis as rd
-from common.const import CURRENT_STATUS, LIMITED_TRIGGER_1, StatusField, ENDPOINT_URL, AlertStatus, COOLING_PERIOD
+from common.const import CURRENT_STATUS, LIMITED_TRIGGER_1, StatusField, ENDPOINT_URL, AlertStatus, COOLING_PERIOD, \
+                            CLOSEMODE_2, CLOSEMODE_3, CLOSEMODE_4, CLOSEMODE_5
 import logging
 import pickle
 from common.utils.datetime_helper import GetCurrentTime
@@ -24,10 +25,56 @@ async def SetCoolingPeriod(id):
         logger.debug(f"SetCoolingPeriod result: {result}")
         return result
     except Exception as ex:
-        print(ex)
         return "SetCoolingPeriod() not work"
 
-async def triggerhttp(data):
+async def GetNextStatus(current):
+    if int(current) == 1:
+        close_mode = [CLOSEMODE_2, CLOSEMODE_3, CLOSEMODE_4, CLOSEMODE_5]
+        status = [AlertStatus.OPEN_2.value, AlertStatus.OPEN_3.value, AlertStatus.OPEN_4.value, AlertStatus.OPEN_5.value]
+        next_status = [i for i in range(len(close_mode)) if close_mode[i] == "open"]
+        if next_status: 
+            next_status = next_status[0]
+            return status[next_status]
+        # all next are close
+        else: 
+            return await RemoveStatusObject()
+    if int(current) == 2:
+        close_mode = [CLOSEMODE_3, CLOSEMODE_4, CLOSEMODE_5]
+        status = [AlertStatus.OPEN_3.value, AlertStatus.OPEN_4.value, AlertStatus.OPEN_5.value]
+        next_status = [i for i in range(len(close_mode)) if close_mode[i] == "open"]
+        if next_status: 
+            next_status = next_status[0]
+            return status[next_status]
+        # all next are close
+        else: 
+            return await RemoveStatusObject()
+    if int(current) == 3:
+        close_mode = [CLOSEMODE_4, CLOSEMODE_5]
+        status = [AlertStatus.OPEN_4.value, AlertStatus.OPEN_5.value]
+        next_status = [i for i in range(len(close_mode)) if close_mode[i] == "open"]
+        if next_status: 
+            next_status = next_status[0]
+            return status[next_status]
+        # all next are close
+        else: 
+            return await RemoveStatusObject()
+    if int(current) == 4:
+        close_mode = [CLOSEMODE_5]
+        status = [AlertStatus.OPEN_5.value]
+        next_status = [i for i in range(len(close_mode)) if close_mode[i] == "open"]
+        if next_status: 
+            next_status = next_status[0]
+            return status[next_status]
+        # all next are close
+        else: 
+            return await RemoveStatusObject()
+
+async def RemoveStatusObject(id, job_id):
+    await rd.delete(CURRENT_STATUS + str(id))
+    logger.debug("Done job 5")
+    scheduler.remove_job(job_id=job_id)
+    
+async def TriggerHTTP(data):
     try:
         jobid, camid, limited, alert_num = data
         
@@ -41,7 +88,6 @@ async def triggerhttp(data):
         # action
         res = http_get_endpoint(ENDPOINT_URL)
         # --------------------------------
-        print(res.status_code)
         if res.status_code == 400:
             # UPDATE TRIGGER TIME
             update_trigger_time = int(current_trigger_time) + 1
@@ -53,20 +99,20 @@ async def triggerhttp(data):
         if update_trigger_time >= limited:
             if int(alert_num) == 1:
                 logger.debug("------------------")
-                await SetCoolingPeriod(id=camid)
+                # await SetCoolingPeriod(id=camid)
                 logger.debug("------------------")
-                next_status = AlertStatus.OPEN_2.value
+                # next_status = AlertStatus.OPEN_2.value
+                next_status = GetNextStatus(1)
             elif int(alert_num) == 2:
-                next_status = AlertStatus.OPEN_3.value
+                next_status = GetNextStatus(2)
             elif int(alert_num) == 3:
-                next_status = AlertStatus.OPEN_4.value
+                next_status = GetNextStatus(3)
             elif int(alert_num) == 4:
-                next_status = AlertStatus.OPEN_5.value
+                next_status = GetNextStatus(4)
             elif int(alert_num) == 5:
                 # Delete object when done job 5
-                await rd.delete(CURRENT_STATUS + str(camid))
+                await RemoveStatusObject(id=camid, job_id=jobid)
                 scheduler.remove_job(job_id=jobid)
-                logger.debug("Done job 5")
                 return
             
             # Update STATUS
@@ -78,7 +124,7 @@ async def triggerhttp(data):
         logger.debug(f"END TRIGGER HTTP trigger time: {update_trigger_time} - Status id: {camid} - Current status {cur}")
         return
     except Exception as ex:
-        raise HTTPException(detail="triggerhttp not work", status_code=400)
+        raise HTTPException(detail="TriggerHTTP not work", status_code=400)
         
 
 async def remove_status_obj(data):

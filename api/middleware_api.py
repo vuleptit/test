@@ -6,7 +6,6 @@ from business_rules.alert.alert_service import ProcessAlertOne, ProcessAlertTwo,
 from fastapi import status as st
 import logging
 from business_rules.redis.connection import redis as rd
-from business_rules.alert.alert_service import test_redis
 
 logger = logging.getLogger('middleware')
 
@@ -82,18 +81,17 @@ async def receive_alert_five(camid):
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_5 not work")
 
+# @router.get("/test-service-function/{id}")
+# async def test(id):
+#     result = await GetCurentStatus(id)
+#     # result = await rd.ttl("alert_status_current1")
+#     return result
 
-@router.get("/test-service-function/{id}")
-async def test(id):
-    result = await GetCurentStatus(id)
-    # result = await rd.ttl("alert_status_current1")
-    return result
-
-@router.get('/test')
-async def test():
-    # result = await test_redis()
-    result = await rd.delete("alert_status_current25")
-    return result
+# @router.get('/test')
+# async def test():
+#     # result = await test_redis()
+#     result = await rd.delete("alert_status_current25")
+#     return result
 
 @router.get('/free')
 def free():

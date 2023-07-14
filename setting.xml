@@ -18,18 +18,18 @@
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
     <disable>False</disable>
-    <closemode>close</closemode>
+    <closemode>open</closemode>
 </alert3>
 <alert4>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
     <disable>False</disable>
-    <closemode>close</closemode>
+    <closemode>open</closemode>
 </alert4>
 <alert5>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
     <disable>False</disable>
-    <closemode>close</closemode>
+    <closemode>open</closemode>
 </alert5>
 </httppush>
