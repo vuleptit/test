@@ -30,7 +30,7 @@ async def SetCoolingPeriod(id):
     except Exception as ex:
         return "SetCoolingPeriod() not work"
 
-async def GetNextStatus(alert_name):
+async def GetNextStatus(alert_name, cam_id = '', job_id = ''):
     if alert_name == AlertName.ALERT1:
         lst_is_disabled = [IS_DISABLED_2, IS_DISABLED_3, IS_DISABLED_4, IS_DISABLED_5]
         lst_next_status = [AlertStatus.OPEN_2.value, AlertStatus.OPEN_3.value, 
@@ -41,17 +41,18 @@ async def GetNextStatus(alert_name):
     elif alert_name == AlertName.ALERT3:
         lst_is_disabled = [IS_DISABLED_4, IS_DISABLED_5]
         lst_next_status = [AlertStatus.OPEN_4.value, AlertStatus.OPEN_5.value]
-    elif  alert_name == AlertName.ALERT5:
+    elif  alert_name == AlertName.ALERT4:
         lst_is_disabled = [IS_DISABLED_5]
         lst_next_status = [AlertStatus.OPEN_5.value]
         
     # Get the index of the first next ENABLED status 
     next_status_index = next(i for i,v in enumerate(lst_is_disabled) if v == False) if False in lst_is_disabled else None
-    if next_status_index: 
+
+    if next_status_index is not None: 
         return lst_next_status[next_status_index]
     else: 
         # If all other Alert is disabled -> All Alerts are done -> Remove object from Redis
-        return await RemoveStatusObject()
+        return await RemoveStatusObject(id=cam_id, job_id=job_id)
     
 # Remove the object from redis
 async def RemoveStatusObject(id, job_id):
@@ -73,17 +74,22 @@ async def TriggerHTTP(data):
         res = http_get_endpoint(ENDPOINT_URL)        
         logger.debug(f'Trigger http done for the camera {cam_id}, with the response: {str(res)}')
         update_trigger_time = int(current_trigger_time) + 1
+        current_trigger_time = await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, update_trigger_time)
+
+        print(f'Current status: {str(await rd.hget(current_status_obj, StatusField.STATUS.value))}, limit: {limited}')
 
         if update_trigger_time >= limited:
-            if alert_name == AlertName.ALERT1:
-                if IS_COOLING_STATUS_ENABLED:
-                    await SetCoolingPeriod(id=cam_id)
-                    return
-            elif alert_name == AlertName.ALERT5:
+            if alert_name == AlertName.ALERT5:
                 # Delete object when the Alert 5 process is done
                 await RemoveStatusObject(id=cam_id, job_id=job_id)
                 scheduler.remove_job(job_id=job_id)
-                return
+                return    
+            
+            scheduler.remove_job(job_id=job_id)
+
+            if alert_name == AlertName.ALERT1:
+                if IS_COOLING_STATUS_ENABLED:
+                    await SetCoolingPeriod(id=cam_id)
 
             next_status = await GetNextStatus(alert_name)
             
@@ -96,7 +102,7 @@ async def TriggerHTTP(data):
         logger.debug(f"END TRIGGER HTTP trigger time: {update_trigger_time} - Camera id: {cam_id} - Current status {cur}")
         return
     except Exception as ex:
-        raise HTTPException(detail="TriggerHTTP not work", status_code=400)
+        raise HTTPException(detail=f"TriggerHTTP not work with exception {str(ex)}", status_code=400)
         
 
 async def remove_status_obj(data):

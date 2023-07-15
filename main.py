@@ -13,8 +13,8 @@ logger, handler = InitRotatingLog(filename="tmp", rotation_freq="M", interval=3)
 # save configuration to redis when start middleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # read the xml configuration file then write to redis
-    await save_configuration()
+    # # read the xml configuration file then write to redis
+    # await save_configuration()
     yield
     handler.doRollover()
     # task after done handling requests can be put here
