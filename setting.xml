@@ -4,32 +4,32 @@
 <alert1>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable>
+    <disable>False</disable> <!--True or False-->
     <!-- have not use time to activate yet -->
     <alarmcoolingperiod interval="10" timetoactivate="90">True</alarmcoolingperiod>
 </alert1>
 <alert2>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable>
+    <disable>False</disable> <!--True or False-->
     <closemode>close</closemode>
 </alert2>
 <alert3>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable>
+    <disable>False</disable> <!--True or False-->
     <closemode>open</closemode>
 </alert3>
 <alert4>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable>
+    <disable>False</disable> <!--True or False-->
     <closemode>open</closemode>
 </alert4>
 <alert5>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable>
+    <disable>False</disable> <!--True or False-->
     <closemode>open</closemode>
 </alert5>
 </httppush>

@@ -1,8 +1,9 @@
 import logging
 from fastapi import APIRouter, HTTPException, Response
-from business_rules.alert.alert_service import ProcessAlertOne, ProcessAlertTwo, GetCurentStatus, GetAlertConfig, \
-                                                SetAlertInitStatus, ProcessAlertThree, \
-                                                ProcessAlertFour, ProcessAlertFive 
+from business_rules.alert.alert_service import (ProcessAlertOne, ProcessAlertTwo, 
+                                                GetCurrentStatus, GetAlertConfig, 
+                                                SetAlertInitStatus, ProcessAlertThree, 
+                                                ProcessAlertFour, ProcessAlertFive)
 from fastapi import status as st
 import logging
 from business_rules.redis.connection import redis as rd
@@ -11,79 +12,77 @@ logger = logging.getLogger('middleware')
 
 router = APIRouter()
 
-@router.get("/receive-alert-1/{camid}")
-async def receive_alert_one(camid):
+@router.get("/receive-alert-1/{cam_id}")
+async def receive_alert_one(cam_id):
     try:
-        # handleid
+        current_status = await GetCurrentStatus(id=cam_id)
+        if current_status is not None:
+            return HTTPException(detail="Another process is running", 
+                                 status_code=st.HTTP_400_BAD_REQUEST)
         
-        status = await GetCurentStatus(id=camid)
-        if status is not None:
-            return HTTPException(detail="Alert one not open, other still processing", status_code=st.HTTP_400_BAD_REQUEST)
+        # Init the object for the new process
+        await SetAlertInitStatus(id=cam_id)
         
-        await SetAlertInitStatus(id=camid)
-        
-        status = await GetCurentStatus(id=camid)
+        # Process the Alert 1
+        current_status = await GetCurrentStatus(id=cam_id)
         config = await GetAlertConfig()
-        result = await ProcessAlertOne(config=config, alert_status=status, id=camid)
+        result = await ProcessAlertOne(config=config, alert_status=current_status, id=cam_id)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_one not work")
 
-@router.get("/receive-alert-2/{camid}")
-async def receive_alert_two(camid):
+@router.get("/receive-alert-2/{cam_id}")
+async def receive_alert_two(cam_id):
     try:
-        # handleid
-        
-        #
-        status = await GetCurentStatus(id=camid)
+        status = await GetCurrentStatus(id=cam_id)
         config = await GetAlertConfig()
-        result = await ProcessAlertTwo(alert_status=status, config=config, id=camid)
+        result = await ProcessAlertTwo(alert_status=status, config=config, id=cam_id)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_two not work")
 
-@router.get("/receive-alert-3/{camid}")
-async def receive_alert_three(camid):
+@router.get("/receive-alert-3/{cam_id}")
+async def receive_alert_three(cam_id):
     try:
         # handleid
         
         #
-        status = await GetCurentStatus(id=camid)
+        status = await GetCurrentStatus(id=cam_id)
         config = await GetAlertConfig()
-        result = await ProcessAlertThree(alert_status=status, config=config, id=camid)
+        result = await ProcessAlertThree(alert_status=status, config=config, id=cam_id)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_3 not work")
 
-@router.get("/receive-alert-4/{camid}")
-async def receive_alert_four(camid):
+@router.get("/receive-alert-4/{cam_id}")
+async def receive_alert_four(cam_id):
     try:
         # handleid
         
         #
-        status = await GetCurentStatus(id=camid)
+        status = await GetCurrentStatus(id=cam_id)
         config = await GetAlertConfig()
-        result = await ProcessAlertFour(alert_status=status, config=config, id=camid)
+        result = await ProcessAlertFour(alert_status=status, config=config, id=cam_id)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_4 not work")
 
-@router.get("/receive-alert-5/{camid}")
-async def receive_alert_five(camid):
+@router.get("/receive-alert-5/{cam_id}")
+async def receive_alert_five(cam_id):
     try:
         # handleid
         
         #
-        status = await GetCurentStatus(id=camid)
+        status = await GetCurrentStatus(id=cam_id)
         config = await GetAlertConfig()
-        result = await ProcessAlertFive(alert_status=status, config=config, id=camid)
+        result = await ProcessAlertFive(alert_status=status, config=config, id=cam_id)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_5 not work")
 
 # @router.get("/test-service-function/{id}")
 # async def test(id):
-#     result = await GetCurentStatus(id)
+#     result = await GetCurrentStatus(id)
 #     # result = await rd.ttl("alert_status_current1")
 #     return result
 
