@@ -15,7 +15,6 @@ services:
       wl-net:
         aliases:
           - tankclean_db
-
   backend:
     container_name: tankclean_backend
     build: ./
@@ -25,8 +24,8 @@ services:
       - .envs/.env
     ports:
       - "8665:8000"
-    environment:
-      - ./envs/.env
+    # environment:
+    #   - ./envs/.env
     volumes:
       - .:/backend
     depends_on:

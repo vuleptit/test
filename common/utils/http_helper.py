@@ -1,20 +1,21 @@
 # HTTP method to call to endpoint
 import requests
 from sys import exc_info
+from fastapi import HTTPException
 
-def http_get_endpoint():
+def http_get_endpoint(url):
     try:
-        url = ""
+        url = url
         request = requests.get(url=url)
-        return request.status_code
+        return request
     except Exception as ex:
-        print(exc_info())
+        return HTTPException(detail="requests failed", status_code=400)
 
-def http_post_endpoint():
+def http_post_endpoint(url, payload):
     try:
-        url = ""
-        payload = []
+        url = url
+        payload = payload
         request = requests.post(url=url, data=payload)
         return request.status_code
     except Exception as ex:
-        print(exc_info())
+        return HTTPException(detail="requests failed", status_code=400)

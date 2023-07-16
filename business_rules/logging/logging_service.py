@@ -16,11 +16,10 @@ def ChangeFileNameOnRotating(default_name):
     folder = os.path.join(LOG_PATH, folder_path)
     
     try:
-        os.make_dir(folder)
+        make_dir(folder)
     except:
         pass
     return os.path.join(folder, file_name)
-
 
 def InitRotatingLog(filename, rotation_freq, interval):
     try:
@@ -38,7 +37,7 @@ def InitRotatingLog(filename, rotation_freq, interval):
         logger = logging.getLogger("middleware")
         logger.addHandler(handler)
         logger.setLevel(logging_level)
-        return logger
+        return logger, handler
     except Exception as ex:
         logging.exception("Unhandled error\n{}".format(ex))
         raise

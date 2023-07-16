@@ -1,44 +1,97 @@
-from fastapi import APIRouter, HTTPException, Response
-from business_rules.redis.connection import redis as rd
-from ast import literal_eval
-from typing import Union
-from pydantic import BaseModel
 import logging
-
+from fastapi import APIRouter, HTTPException, Response
+from business_rules.alert.alert_service import (ProcessAlertOne, ProcessAlertTwo, 
+                                                GetCurrentStatus, GetAlertConfig, 
+                                                SetAlertInitStatus, ProcessAlertThree, 
+                                                ProcessAlertFour, ProcessAlertFive)
+from fastapi import status as st
+import logging
+from business_rules.redis.connection import redis as rd
 
 logger = logging.getLogger('middleware')
 
-class DataModel(BaseModel):
-    code: int
-    class Config:
-        orm_mode = True
-
 router = APIRouter()
 
-@router.get('/')
-async def get_set_redis():
+@router.get("/receive-alert-1/{cam_id}")
+async def receive_alert_one(cam_id):
     try:
-        logger.info('Before getting alert config')
-        config = await rd.get('alert')
-        logger.info('After getting alert config')
-        config = literal_eval(config.decode('utf-8'))
+        current_status = await GetCurrentStatus(id=cam_id)
+        if current_status is not None:
+            return HTTPException(detail="Another process is running", 
+                                 status_code=st.HTTP_400_BAD_REQUEST)
         
+        # Init the object for the new process
+        await SetAlertInitStatus(id=cam_id)
+        
+        # Process the Alert 1
+        current_status = await GetCurrentStatus(id=cam_id)
+        config = await GetAlertConfig()
+        result = await ProcessAlertOne(config=config, alert_status=current_status, id=cam_id)
+        return result
     except Exception as ex:
-        print(ex)
-    return config
-    
-@router.get('/endpoint')
-async def get_endpoint(data: DataModel):
+        raise HTTPException(status_code=400, detail="receive_alert_one not work")
+
+@router.get("/receive-alert-2/{cam_id}")
+async def receive_alert_two(cam_id):
     try:
-        data = data
+        status = await GetCurrentStatus(id=cam_id)
+        config = await GetAlertConfig()
+        result = await ProcessAlertTwo(alert_status=status, config=config, id=cam_id)
+        return result
     except Exception as ex:
-        print(ex)
-        raise HTTPException("Something went wrong") 
-    
-@router.post('/endpoint/')
-async def post_endpoint(data: DataModel):
+        raise HTTPException(status_code=400, detail="receive_alert_two not work")
+
+@router.get("/receive-alert-3/{cam_id}")
+async def receive_alert_three(cam_id):
     try:
-        data = data
+        # handleid
+        
+        #
+        status = await GetCurrentStatus(id=cam_id)
+        config = await GetAlertConfig()
+        result = await ProcessAlertThree(alert_status=status, config=config, id=cam_id)
+        return result
     except Exception as ex:
-        print(ex)
-        raise HTTPException("Something went wrong") 
+        raise HTTPException(status_code=400, detail="receive_alert_3 not work")
+
+@router.get("/receive-alert-4/{cam_id}")
+async def receive_alert_four(cam_id):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurrentStatus(id=cam_id)
+        config = await GetAlertConfig()
+        result = await ProcessAlertFour(alert_status=status, config=config, id=cam_id)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_4 not work")
+
+@router.get("/receive-alert-5/{cam_id}")
+async def receive_alert_five(cam_id):
+    try:
+        # handleid
+        
+        #
+        status = await GetCurrentStatus(id=cam_id)
+        config = await GetAlertConfig()
+        result = await ProcessAlertFive(alert_status=status, config=config, id=cam_id)
+        return result
+    except Exception as ex:
+        raise HTTPException(status_code=400, detail="receive_alert_5 not work")
+
+# @router.get("/test-service-function/{id}")
+# async def test(id):
+#     result = await GetCurrentStatus(id)
+#     # result = await rd.ttl("alert_status_current1")
+#     return result
+
+# @router.get('/test')
+# async def test():
+#     # result = await test_redis()
+#     result = await rd.delete("alert_status_current25")
+#     return result
+
+@router.get('/free')
+def free():
+    return Response(content='a', status_code=200)

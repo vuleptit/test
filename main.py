@@ -7,15 +7,20 @@ from contextlib import asynccontextmanager
 from common.utils.init_config import save_configuration
 import logging
 from business_rules.logging.logging_service import InitRotatingLog
+from os.path import abspath, basename, dirname, join, normpath, realpath
 
-logger = InitRotatingLog(filename="tmp", rotation_freq="S", interval=3)
+logger, handler = InitRotatingLog(filename="tmp", rotation_freq="M", interval=3)
 
 # save configuration to redis when start middleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # read the xml configuration file then write to redis
-    await save_configuration()
+
+    print(normpath(__file__))
+
+    # # read the xml configuration file then write to redis
+    # await save_configuration()
     yield
+    handler.doRollover()
     # task after done handling requests can be put here
 app = FastAPI(lifespan=lifespan)
 
