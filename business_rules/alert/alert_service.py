@@ -92,9 +92,15 @@ async def ProcessAlertOne(alert_status, config, id):
     try:
         if alert_status == AlertStatus.OPEN_1.value:
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_1.value)
-            
+            # Keep the job alive until done
+            job_time = INTERVAL_1 * LIMITED_TRIGGER_1
+            status_obj_ttl = await rd.ttl(CURRENT_STATUS + str(id))
+            if job_time <= int(status_obj_ttl):
+                await rd.expire(CURRENT_STATUS + str(id), job_time)
+            # 
             # Scheduler job to trigger http
             trigger_job_random_id = f'alert1_http_job_{id}'
+            
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_1, 
                               id=trigger_job_random_id, 
                               args=[(trigger_job_random_id, id, LIMITED_TRIGGER_1, AlertName.ALERT1)], 
@@ -129,7 +135,12 @@ async def ProcessAlertTwo(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_2.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 2"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_2.value)
-            
+             # Keep the job alive until done
+            job_time = INTERVAL_2 * LIMITED_TRIGGER_2
+            status_obj_ttl = await rd.ttl(CURRENT_STATUS + str(id))
+            if job_time <= int(status_obj_ttl):
+                await rd.expire(CURRENT_STATUS + str(id), job_time)
+            # 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert2_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_2, 
@@ -161,7 +172,12 @@ async def ProcessAlertThree(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_3.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 3"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_3.value)
-            
+            # Keep the job alive until done
+            job_time = INTERVAL_3 * LIMITED_TRIGGER_3
+            status_obj_ttl = await rd.ttl(CURRENT_STATUS + str(id))
+            if job_time <= int(status_obj_ttl):
+                await rd.expire(CURRENT_STATUS + str(id), job_time)
+            # 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert3_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_3, 
@@ -189,7 +205,12 @@ async def ProcessAlertFour(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_4.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 4"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_4.value)
-            
+            # Keep the job alive until done
+            job_time = INTERVAL_4 * LIMITED_TRIGGER_4
+            status_obj_ttl = await rd.ttl(CURRENT_STATUS + str(id))
+            if job_time <= int(status_obj_ttl):
+                await rd.expire(CURRENT_STATUS + str(id), job_time)
+            # 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert4_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_4, 
@@ -217,7 +238,12 @@ async def ProcessAlertFive(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_5.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 5"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_5.value)
-            
+            # Keep the job alive until done
+            job_time = INTERVAL_5 * LIMITED_TRIGGER_5
+            status_obj_ttl = await rd.ttl(CURRENT_STATUS + str(id))
+            if job_time <= int(status_obj_ttl):
+                await rd.expire(CURRENT_STATUS + str(id), job_time)
+            # 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert5_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_5, 
