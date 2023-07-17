@@ -6,16 +6,16 @@ from fastapi import HTTPException
 def http_get_endpoint(url):
     try:
         url = url
-        request = requests.get(url=url)
-        return request
+        response = requests.get(url=url)
+        return response
     except Exception as ex:
-        return HTTPException(detail="requests failed", status_code=400)
+        return HTTPException(detail="Request failed", status_code=400)
 
 def http_post_endpoint(url, payload):
     try:
         url = url
         payload = payload
-        request = requests.post(url=url, data=payload)
-        return request.status_code
+        response = requests.post(url=url, data=payload)
+        return response
     except Exception as ex:
-        return HTTPException(detail="requests failed", status_code=400)
+        return HTTPException(detail="Request failed", status_code=400)
