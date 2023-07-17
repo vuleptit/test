@@ -1,4 +1,6 @@
 import os
+import shutil
+
 def make_dir(path):
     try:
         os.makedirs(path, exist_ok=True)
@@ -7,6 +9,7 @@ def make_dir(path):
     
 def delete_dir(path):
     try:
-        os.rmdir(path)
+        shutil.rmtree(path)
     except Exception as ex:
+        print(str(ex))
         return
