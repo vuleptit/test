@@ -12,6 +12,7 @@ from fastapi import status
 from common.utils.datetime_helper import GetCurrentTime, GetTimeAfterSecond
 from common.utils.random_helper import rand_id
 from common.utils.scheduler_helper import TriggerHTTP, scheduler, remove_status_obj
+from business_rules.logging.logging_service import write_log
 import logging
 import pickle
 import datetime
@@ -49,7 +50,7 @@ async def GetCoolingPeriod(id):
             cooling_obj = pickle.loads(result)
             return cooling_obj
     except Exception as ex:
-        logger.debug(f'Exception from GetCoolingPeriod: {str(ex)}')
+        write_log(log_str=f'Exception from GetCoolingPeriod: {str(ex)}', camera_id=id)
         return DEFAULT_EXCEPTION_MESSAGE
 
 # Check the readiness of the Process for the Alert
@@ -61,17 +62,22 @@ async def IsFreeFromCoolingPeriod(id):
         #       check if the processing can turn into the "process" status of the Alert 
         cooling_per = await GetCoolingPeriod(id=id)
 
-        print(f'cooling: {cooling_per}')
-
         if cooling_per is None:
             return True
-        logger.debug(f"Cooling period: {cooling_per}, type: {type(cooling_per)}")
 
         start, time = cooling_per
         end_cooling = GetTimeAfterSecond(start=start, interval=int(time))
-        return end_cooling <= datetime.datetime.now()
+
+        is_cooling_period_free = end_cooling <= datetime.datetime.now()
+
+        write_log(log_str=f"Checking cooling period"
+                          + f"\nStart time: {start.strftime('%d/%m/%y %H:%M:%s')}"
+                          + f"\nEnd time: {end_cooling.strftime('%d/%m/%y %H:%M:%s')}"
+                          + f"\nIs still in Cooling time: {is_cooling_period_free == False}", camera_id=id)
+
+        return is_cooling_period_free
     except Exception as ex:
-        logger.debug(f"Exception from IsFreeFromCoolingPeriod method: {str(ex)}")
+        write_log(log_str=f"Exception from IsFreeFromCoolingPeriod method: {str(ex)}", camera_id=id)
         return DEFAULT_EXCEPTION_MESSAGE
 
 async def GetCurrentStatus(id):
@@ -110,20 +116,25 @@ async def ProcessAlertOne(alert_status, config, id):
             return HTTPException(detail="The process is not opening for the Alert one", 
                                  status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
-        logger.debug(f'Exception from ProcessAlertOne: ' + str(ex))
+        write_log(log_str=f'Exception from ProcessAlertOne: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
 async def ProcessAlertTwo(alert_status, config, id):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
-        logger.debug(f"Is free from cooling period : {is_not_cooling}")
+
+        if is_not_cooling is False:
+            return
+
         current_status = await GetCurrentStatus(id=id)
-        logger.debug(f"BEGIN PROCESS 2: Status id: {id} - Current status {current_status}")
+        write_log(log_str=f"BEGIN PROCESS 2:"
+                          + f"\nCamera id: {id}"
+                          + f"\nCurrent status: {current_status}", camera_id=id)
         # if CLOSE_MODE_2 == "close":
         #     return "Alert 2 is in close mode" # Not used yet
 
         if IS_DISABLED_2:
-            logger.debug(f'The process is rejected because the alert 2 is disabled')
+            write_log(log_str=f'The process is rejected because the alert 2 is disabled', camera_id=id)
             return "Alert 2 is now disabled"
 
         if alert_status == AlertStatus.OPEN_2.value and is_not_cooling is True:
@@ -141,21 +152,26 @@ async def ProcessAlertTwo(alert_status, config, id):
         else:
             return HTTPException(detail="Alert two not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
-        logger.debug(f'Exception from ProcessAlertTwo: ' + str(ex))
+        write_log(log_str=f'Exception from ProcessAlertTwo: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
 
 async def ProcessAlertThree(alert_status, config, id):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
-        logger.debug(f"Is free from cooling period : {is_not_cooling}")
+
+        if is_not_cooling is False:
+            return
+
         current_status = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
-        logger.debug(f"BEGIN PROCESS 3: Status id: {id} - Current status {current_status}")
+        write_log(log_str=f"BEGIN PROCESS 3:"
+                          + f"\nCamera id: {id}"
+                          + f"\nCurrent status: {current_status}", camera_id=id)
         
         # if CLOSE_MODE_3 == "close":
         #     return "Alert 3 is in close mode" # Not used yet
 
         if IS_DISABLED_3:
-            logger.debug(f'The process is rejected because the alert 3 is disabled')
+            write_log(log_str=f'The process is rejected because the alert 3 is disabled', camera_id=id)
             return "Alert 3 is now disabled"
         
         if alert_status == AlertStatus.OPEN_3.value and is_not_cooling is True:
@@ -173,15 +189,20 @@ async def ProcessAlertThree(alert_status, config, id):
         else:
             return HTTPException(detail="Alert 3 not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
-        logger.debug(f'Exception from ProcessAlertThree: ' + str(ex))
+        write_log(log_str=f'Exception from ProcessAlertThree: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
 async def ProcessAlertFour(alert_status, config, id):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
-        logger.debug(f"Is free from cooling period : {is_not_cooling}")
+
+        if is_not_cooling is False:
+            return
+
         current_status = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
-        logger.debug(f"BEGIN PROCESS 4: Status id: {id} - Current status {current_status}")
+        write_log(log_str=f"BEGIN PROCESS 4:"
+                          + f"\nCamera id: {id}"
+                          + f"\nCurrent status: {current_status}", camera_id=id)
         
         # if CLOSE_MODE_4 == "close":
         #     return "Alert 4 is in close mode" # Not used yet
@@ -201,15 +222,20 @@ async def ProcessAlertFour(alert_status, config, id):
         else:
             return HTTPException(detail="Alert 4 not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
-        logger.debug(f'Exception from ProcessAlertFour: ' + str(ex))
+        write_log(log_str=f'Exception from ProcessAlertFour: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
 async def ProcessAlertFive(alert_status, config, id):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
-        logger.debug(f"Is free from cooling period : {is_not_cooling}")
+
+        if is_not_cooling is False:
+            return
+
         current_status = await rd.hget(CURRENT_STATUS + str(id), StatusField.STATUS.value)
-        logger.debug(f"BEGIN PROCESS 5: Status id: {id} - Current status {current_status}")
+        write_log(log_str=f"BEGIN PROCESS 5:"
+                          + f"\nCamera id: {id}"
+                          + f"\nCurrent status: {current_status}", camera_id=id)
         
         # if CLOSE_MODE_5 == "close":
         #     return "Alert 5 is in close mode" # Not used yet
@@ -229,6 +255,6 @@ async def ProcessAlertFive(alert_status, config, id):
         else:
             return HTTPException(detail="Alert 5 not open", status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
-        logger.debug(f'Exception from ProcessAlertFive: ' + str(ex))
+        write_log(log_str=f'Exception from ProcessAlertFive: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
