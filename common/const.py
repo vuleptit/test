@@ -155,5 +155,8 @@ ENDPOINT_URL = "http://127.0.0.1:8665/trigger/free"
 # Default Exception message
 DEFAULT_EXCEPTION_MESSAGE = 'Something went wrong. Please check the logfile for more information'
 
+# Max execution time
+MAX_EXECUTION_TIME = 10
+
 # Http Status codes
 HTTP_STATUS_OK = 200

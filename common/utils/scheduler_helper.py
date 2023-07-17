@@ -66,12 +66,12 @@ async def TriggerHTTP(data):
         
         cur = await rd.hget(CURRENT_STATUS + str(cam_id), StatusField.STATUS.value)
         logger.debug(f"BEGIN TRIGGER HTTP: Status id: {cam_id} - Current status {cur}")
-       
+
         current_status_obj = str(CURRENT_STATUS + str(cam_id))
         current_trigger_time = await rd.hget(current_status_obj, StatusField.TRIGGER_TIME.value)
 
         # Trigger http endpoint
-        res = http_get_endpoint(ENDPOINT_URL)        
+        res = http_get_endpoint(ENDPOINT_URL)
         logger.debug(f'Trigger http done for the camera {cam_id}, with the response: {str(res)}')
         update_trigger_time = int(current_trigger_time) + 1
         current_trigger_time = await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, update_trigger_time)
@@ -82,7 +82,7 @@ async def TriggerHTTP(data):
             if alert_name == AlertName.ALERT5:
                 # Delete object when the Alert 5 process is done
                 await RemoveStatusObject(id=cam_id, job_id=job_id)
-                scheduler.remove_job(job_id=job_id)
+                # scheduler.remove_job(job_id=job_id)
                 return    
             
             scheduler.remove_job(job_id=job_id)
