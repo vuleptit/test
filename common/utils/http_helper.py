@@ -3,19 +3,20 @@ import requests
 from sys import exc_info
 from fastapi import HTTPException
 
-def http_get_endpoint(url):
+def http_get_endpoint(url, params=None):
     try:
         url = url
-        request = requests.get(url=url)
-        return request
+        res = requests.get(url=url)
+        res = requests.get(url=url, params=params)
+        return res.json()
     except Exception as ex:
-        return HTTPException(detail="requests failed", status_code=400)
+        return HTTPException(detail="Request failed", status_code=400)
 
 def http_post_endpoint(url, payload):
     try:
         url = url
         payload = payload
-        request = requests.post(url=url, data=payload)
-        return request.status_code
+        res = requests.post(url=url, data=payload)
+        return res.json()
     except Exception as ex:
-        return HTTPException(detail="requests failed", status_code=400)
+        return HTTPException(detail="Request failed", status_code=400)

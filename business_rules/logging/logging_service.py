@@ -8,36 +8,17 @@ from common.const import LOG_PATH
 
 # Logger will call this function on rotating log
 
-def ChangeFileNameOnRotating(default_name):
-    file_name = os.path.split(default_name)[1]
-    daily_folder = datetime.datetime.now().strftime('%Y-%m-%d') 
-    hourly_folder = datetime.datetime.now().strftime('%H-%M')
-    folder_path = os.path.join(daily_folder, hourly_folder)
-    folder = os.path.join(LOG_PATH, folder_path)
-    
-    try:
-        make_dir(folder)
-    except:
-        pass
-    return os.path.join(folder, file_name)
+def write_log(log_str: str, camera_id: str):
+    current_time = datetime.datetime.now()
 
-def InitRotatingLog(filename, rotation_freq, interval):
-    try:
-        logging_level = logging.DEBUG
-        
-        handler = logging.handlers.TimedRotatingFileHandler(filename=filename, when=rotation_freq, interval=interval)
-        handler.namer = ChangeFileNameOnRotating
-        
-        # suffix format
-        handler.suffix = "%H-%M-%S.log"
-        formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
-        handler.setFormatter(formatter)
-        
-        # name logger
-        logger = logging.getLogger("middleware")
-        logger.addHandler(handler)
-        logger.setLevel(logging_level)
-        return logger, handler
-    except Exception as ex:
-        logging.exception("Unhandled error\n{}".format(ex))
-        raise
+    # Create folder
+    make_dir('logs')
+    date_folder_name = current_time.strftime('%Y_%m_%d')
+    make_dir(f"logs/{date_folder_name}")
+
+    # Write log
+    f = open(f"{os.getcwd()}/logs/{date_folder_name}/{camera_id}.txt", "a")
+    f.writelines("\n===============================\n")
+    f.writelines("Start time: " + current_time.strftime('%d/%m/%y %H:%M:%s') + "\n")
+    f.writelines(log_str)
+    f.writelines("\n===============================\n")
