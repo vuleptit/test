@@ -1,6 +1,6 @@
 from business_rules.redis.connection import redis as rd
 from common.const import (ALERT_CONFIG_OBJ, AlertStatus, AlertName, 
-                          COOLING_PERIOD_OBJ, COOLING_PERIOD_TIME, 
+                          COOLING_PERIOD_OBJ, COOLING_PERIOD_TIME, MAX_EXECUTION_TIME,
                           CURRENT_STATUS, StatusField, TIME_TO_RESET_CYCLE, 
                           INTERVAL_1, INTERVAL_2, INTERVAL_3, INTERVAL_4, INTERVAL_5, 
                           LIMITED_TRIGGER_1, LIMITED_TRIGGER_2, LIMITED_TRIGGER_3, 
@@ -58,8 +58,8 @@ async def IsFreeFromCoolingPeriod(id):
     try:
         # If the process is in Cooling period
         #   If the cooling time is not over, return exception
-        #   If the cooling time is over, 
-        #       check if the processing can turn into the "process" status of the Alert 
+        #   If the cooling time is over,
+        #       check if the processing can turn into the "process" status of the Alert
         cooling_per = await GetCoolingPeriod(id=id)
 
         if cooling_per is None:
@@ -91,20 +91,28 @@ async def GetCurrentStatus(id):
         return alert_status
     except Exception as ex:
         return "GetCurrentStatus() not work"
-
+    
+# Keep the job alive until done
+async def KeepJobAlive(interval, limited, status_object):
+    job_time = interval * limited
+    
+    status_obj_ttl = await rd.ttl(status_object)
+    if job_time >= status_obj_ttl:
+        return await rd.expire(status_object, job_time + MAX_EXECUTION_TIME)
 
 # Alerts processing
-async def ProcessAlertOne(alert_status, config, id):
+async def ProcessAlertOne(alert_status, config, id, params):
     try:
         if alert_status == AlertStatus.OPEN_1.value:
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_1.value)
-            
+            await KeepJobAlive(interval=INTERVAL_1, limited=LIMITED_TRIGGER_1, status_object=CURRENT_STATUS + str(id))
             # Scheduler job to trigger http
             trigger_job_random_id = f'alert1_http_job_{id}'
-            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_1, 
-                              id=trigger_job_random_id, 
-                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_1, AlertName.ALERT1)], 
-                              next_run_time=datetime.datetime.now()) 
+            
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_1,
+                              id=trigger_job_random_id,
+                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_1, AlertName.ALERT1, params)],
+                              next_run_time=datetime.datetime.now())
             
             # Scheduler job to auto-remove from redis
             scheduler.add_job(remove_status_obj, 'date', 
@@ -119,7 +127,7 @@ async def ProcessAlertOne(alert_status, config, id):
         write_log(log_str=f'Exception from ProcessAlertOne: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
-async def ProcessAlertTwo(alert_status, config, id):
+async def ProcessAlertTwo(alert_status, config, id, params):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
 
@@ -140,12 +148,12 @@ async def ProcessAlertTwo(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_2.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 2"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_2.value)
-            
+            await KeepJobAlive(interval=INTERVAL_2, limited=LIMITED_TRIGGER_2, status_object=CURRENT_STATUS + str(id))
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert2_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_2, 
                               id=trigger_job_random_id, 
-                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, AlertName.ALERT2)], 
+                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_2, AlertName.ALERT2, params)],
                               next_run_time=datetime.datetime.now()) 
         
             return "The Alert two starts the processing successfully!"
@@ -155,7 +163,7 @@ async def ProcessAlertTwo(alert_status, config, id):
         write_log(log_str=f'Exception from ProcessAlertTwo: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
 
-async def ProcessAlertThree(alert_status, config, id):
+async def ProcessAlertThree(alert_status, config, id, params):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
 
@@ -177,12 +185,12 @@ async def ProcessAlertThree(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_3.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 3"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_3.value)
-            
+            await KeepJobAlive(interval=INTERVAL_3, limited=LIMITED_TRIGGER_3, status_object=CURRENT_STATUS + str(id))
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert3_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_3, 
                               id=trigger_job_random_id, 
-                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, AlertName.ALERT3)], 
+                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_3, AlertName.ALERT3, params)],
                               next_run_time=datetime.datetime.now())
             
             return "The Alert three starts the processing successfully!"
@@ -192,7 +200,7 @@ async def ProcessAlertThree(alert_status, config, id):
         write_log(log_str=f'Exception from ProcessAlertThree: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
-async def ProcessAlertFour(alert_status, config, id):
+async def ProcessAlertFour(alert_status, config, id, params):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
 
@@ -210,12 +218,12 @@ async def ProcessAlertFour(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_4.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 4"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_4.value)
-            
+            await KeepJobAlive(interval=INTERVAL_4, limited=LIMITED_TRIGGER_4, status_object=CURRENT_STATUS + str(id))
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert4_http_job_{id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_4, 
                               id=trigger_job_random_id, 
-                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, AlertName.ALERT4)], 
+                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_4, AlertName.ALERT4, params)],
                               next_run_time=datetime.datetime.now())
 
             return "The Alert four starts the processing successfully!"
@@ -225,7 +233,7 @@ async def ProcessAlertFour(alert_status, config, id):
         write_log(log_str=f'Exception from ProcessAlertFour: {str(ex)}', camera_id=id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
-async def ProcessAlertFive(alert_status, config, id):
+async def ProcessAlertFive(alert_status, config, id, params):
     try:
         is_not_cooling = await IsFreeFromCoolingPeriod(id)
 
@@ -243,12 +251,12 @@ async def ProcessAlertFive(alert_status, config, id):
         if alert_status == AlertStatus.OPEN_5.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 5"
             await rd.hset(CURRENT_STATUS + str(id), StatusField.STATUS.value, AlertStatus.PROCESSING_5.value)
-            
+            await KeepJobAlive(interval=INTERVAL_5, limited=LIMITED_TRIGGER_5, status_object=CURRENT_STATUS + str(id))
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert5_http_job_{id}'
-            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_5, 
+            scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_5,
                               id=trigger_job_random_id, 
-                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, AlertName.ALERT5)], 
+                              args=[(trigger_job_random_id, id, LIMITED_TRIGGER_5, AlertName.ALERT5, params)],
                               next_run_time=datetime.datetime.now())
     
             return "The Alert five starts the processing successfully!"

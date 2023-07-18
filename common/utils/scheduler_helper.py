@@ -68,7 +68,7 @@ async def RemoveStatusObject(id, job_id):
     
 async def TriggerHTTP(data):
     try:
-        job_id, cam_id, limited, alert_name = data
+        job_id, cam_id, limited, alert_name, params = data
         current_status_obj = str(CURRENT_STATUS + str(cam_id))
         current_trigger_time = await rd.hget(current_status_obj, StatusField.TRIGGER_TIME.value)
 
@@ -82,7 +82,7 @@ Limited call times: {limited}
 Current call time: {str(current_trigger_time)}""", camera_id=cam_id)
 
         # Trigger http endpoint
-        res = http_get_endpoint(ENDPOINT_URL)  
+        res = http_get_endpoint(ENDPOINT_URL, params=params)  
 
         write_log(log_str=f"""
 Trigger http done for the camera {cam_id}
@@ -96,7 +96,7 @@ Response: {str(res)}""", camera_id=cam_id)
             if alert_name == AlertName.ALERT5:
                 # Delete object when the Alert 5 process is done
                 await RemoveStatusObject(id=cam_id, job_id=job_id)
-                scheduler.remove_job(job_id=job_id)
+                # scheduler.remove_job(job_id=job_id)
                 return    
             
             scheduler.remove_job(job_id=job_id)
