@@ -61,6 +61,7 @@ async def IsFreeFromCoolingPeriod(id):
         #   If the cooling time is over,
         #       check if the processing can turn into the "process" status of the Alert
         cooling_per = await GetCoolingPeriod(id=id)
+
         if cooling_per is None:
             return True
 
