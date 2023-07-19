@@ -79,7 +79,9 @@ Job id: {job_id}
 Camera id: {cam_id}
 Current status: {str(cur)}
 Limited call times: {limited}
-Current call time: {str(current_trigger_time)}""", camera_id=cam_id)
+Current call time: {str(current_trigger_time)}
+Params: {str(params)}
+""", camera_id=cam_id)
 
         # Trigger http endpoint
         res = http_get_endpoint(ENDPOINT_URL, params=params)  

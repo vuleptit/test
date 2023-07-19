@@ -1,7 +1,9 @@
 from enum import Enum
 import xml.etree.ElementTree as ET
 import os
-from common.utils.xml_helper import find_alert_config_attributes, find_config, find_reset_time
+from common.utils.xml_helper import (find_alert_config_attributes, 
+                                     find_config, find_reset_time,
+                                     get_external_http_endpoint)
 
 # Redis
 REDIS_PORT = '6379'
@@ -150,7 +152,7 @@ class MiddlewareLog(Enum):
 
 
 # Endpoint url
-ENDPOINT_URL = "http://127.0.0.1:8665/trigger/free"
+ENDPOINT_URL = str(get_external_http_endpoint(element_tree=et))
 
 # Default Exception message
 DEFAULT_EXCEPTION_MESSAGE = 'Something went wrong. Please check the logfile for more information'

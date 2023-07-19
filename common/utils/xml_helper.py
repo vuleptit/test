@@ -18,3 +18,8 @@ def find_alert_config_attributes(element_tree: ElementTree, alert_name: str,aler
 def find_reset_time(element_tree: ElementTree):
     setting = element_tree.getroot()
     return int(setting.attrib["resettime"])
+
+def get_external_http_endpoint(element_tree: ElementTree):
+    setting = element_tree.getroot()
+    http_endpoint = setting.find("endpoint")
+    return http_endpoint.text
