@@ -32,4 +32,5 @@
     <disable>False</disable> <!--True or False-->
     <closemode>open</closemode>
 </alert5>
+<endpoint>http://admin:Sentry!256@192.168.1.210:7001/api/createEvent</endpoint>
 </httppush>
