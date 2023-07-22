@@ -53,6 +53,7 @@ class AlertStatus(str, Enum):
     PROCESSING_4 = 'processing4'
     OPEN_5 = 'open5'
     PROCESSING_5 = 'processing5'
+    COOLING = 'cooling'
 
 class StatusField(str, Enum):
     STATUS = "status"
@@ -162,3 +163,5 @@ MAX_EXECUTION_TIME = 10
 
 # Http Status codes
 HTTP_STATUS_OK = 200
+
+REMOVE_RECORD_JOB_PREFIX = 'remove_record_job_'

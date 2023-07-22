@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from common.const import LIMITED_TRIGGER_1
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -13,21 +13,37 @@ from common.const import (CURRENT_STATUS, LIMITED_TRIGGER_1, StatusField,
 from business_rules.logging.logging_service import write_log
 import pickle
 from common.utils.datetime_helper import GetCurrentTime
+from business_rules.alert.alert_service import remove_alert, update_alert, get_alert_by_cam_id, update_alert_status
+from sqlalchemy.orm import Session
+from main import get_db
+from datetime import datetime, timedelta
+from business_rules.view_models.alert_view_model import AlertViewModel
 
 scheduler = AsyncIOScheduler()
 scheduler.start()
 
-async def SetCoolingPeriod(id):
+async def SetCoolingPeriod(camera_id: str, db: Session):
     try:
-        current_status_obj = CURRENT_STATUS + str(id)
-        current_date_time = GetCurrentTime()
-        cooling_obj = pickle.dumps([current_date_time, COOLING_PERIOD_TIME])
-        result = await rd.hset(current_status_obj, StatusField.COOLING.value, cooling_obj)
+        db_alert: AlertViewModel = get_alert_by_cam_id(db=db, cam_id=camera_id)
+        db_alert.status = AlertStatus.COOLING
 
-        write_log(
+        cooling_end_time = datetime.utcnow() + timedelta(seconds=COOLING_PERIOD_TIME)
+        db_alert.cooling_end_time = cooling_end_time
+
+        result = update_alert(db=db, alert=db_alert)
+        if result is not None:
+            write_log(
+            log_str=f"The cooling period for the camera {camera_id} "
+                    + f"has been set to the time: {cooling_end_time.strftime('%d/%m/%y %H:%M:%s')}"
+                    + f"\nCooling period length: {COOLING_PERIOD_TIME} second(s)"
+                    + f"\Result: Success", 
+            camera_id=id)
+        else:
+            write_log(
             log_str=f"The cooling period for the camera {id} "
-                    + f"has been set with the time: {current_date_time.strftime('%d/%m/%y %H:%M:%s')}"
-                    + f"\nCooling period length: {COOLING_PERIOD_TIME} second(s)", 
+                    + f"has been set to the time: {cooling_end_time.strftime('%d/%m/%y %H:%M:%s')}"
+                    + f"\nCooling period length: {COOLING_PERIOD_TIME} second(s)"
+                    + f"\nResult: Fail", 
             camera_id=id)
         
         return result
@@ -66,18 +82,19 @@ async def RemoveStatusObject(id, job_id):
     write_log(log_str=f"The data for the camera {id} has been removed.", camera_id=id)
     scheduler.remove_job(job_id=job_id)
     
-async def TriggerHTTP(data):
+async def TriggerHTTP(data, db: Session = Depends(get_db)):
     try:
         job_id, cam_id, limited, alert_name, params = data
-        current_status_obj = str(CURRENT_STATUS + str(cam_id))
-        current_trigger_time = await rd.hget(current_status_obj, StatusField.TRIGGER_TIME.value)
 
-        cur = await rd.hget(CURRENT_STATUS + str(cam_id), StatusField.STATUS.value)
+        db_alert: AlertViewModel = get_alert_by_cam_id(db=db, cam_id=cam_id)
+
+        current_trigger_time = db_alert.time_triggered
+
         write_log(log_str=f"""
 BEGIN TRIGGER HTTP:
 Job id: {job_id}
 Camera id: {cam_id}
-Current status: {str(cur)}
+Current status: {str(db_alert.status)}
 Limited call times: {limited}
 Current call time: {str(current_trigger_time)}
 Params: {str(params)}
@@ -91,13 +108,13 @@ Trigger http done for the camera {cam_id}
 Endpoint: {ENDPOINT_URL}
 Response: {str(res)}""", camera_id=cam_id)
         
-        update_trigger_time = int(current_trigger_time) + 1
-        current_trigger_time = await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, update_trigger_time)
+        db_alert.time_triggered += 1
+        update_alert(db=db, alert=db_alert)
 
-        if update_trigger_time >= limited:
+        if db_alert.time_triggered >= limited:
             if alert_name == AlertName.ALERT5:
                 # Delete object when the Alert 5 process is done
-                await RemoveStatusObject(id=cam_id, job_id=job_id)
+                remove_alert(db=db, camera_id=cam_id)
                 # scheduler.remove_job(job_id=job_id)
                 return    
             
@@ -110,19 +127,16 @@ Response: {str(res)}""", camera_id=cam_id)
             next_status = await GetNextStatus(alert_name)
             
             # Update STATUS
-            await rd.hset(CURRENT_STATUS + str(cam_id), StatusField.STATUS.value, next_status)
-            # Reset trigger times of the scheduler job
-            await rd.hset(current_status_obj, StatusField.TRIGGER_TIME.value, 0)
-
-        cur = await rd.hget(CURRENT_STATUS + str(cam_id), StatusField.STATUS.value)
+            db_alert.status = next_status
+            db_alert.time_triggered = 0
+            update_alert(db=db, alert=db_alert)
         return
     except Exception as ex:
         write_log(log_str=f"Exception from TriggerHTTP: {str(ex)}", camera_id=cam_id)
         raise HTTPException(detail=f"TriggerHTTP not work with exception {str(ex)}", status_code=400)
         
 
-async def remove_status_obj(data):
+async def remove_status_obj(data, db: Session = Depends(get_db)):
     cam_id = data
-    current_status_obj = str(CURRENT_STATUS + str(cam_id))
-    await rd.delete(current_status_obj) 
-    write_log(log_str=f'Removed the object from redis. End the cycle of the camera {cam_id}', camera_id=cam_id)
+    remove_alert(db=db, camera_id=cam_id)
+    write_log(log_str=f'Removed the record for the camera. End the cycle of the camera {cam_id}', camera_id=cam_id)

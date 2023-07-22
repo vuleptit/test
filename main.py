@@ -9,6 +9,14 @@ from common.utils.init_config import save_configuration
 from common.utils.scheduler_helper import TriggerHTTP, scheduler
 from common.utils.file_helper import delete_dir
 import os
+from .database import SessionLocal
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # save configuration to redis when start middleware
 @asynccontextmanager
