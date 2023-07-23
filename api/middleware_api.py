@@ -1,16 +1,15 @@
 import logging
 import requests as rq
 from fastapi import APIRouter, HTTPException, Response, Request
-from business_rules.alert.alert_service import (ProcessAlertOne, ProcessAlertTwo, 
-                                                GetCurrentStatus, 
-                                                ProcessAlertThree, ProcessAlertFour, 
-                                                ProcessAlertFive)
+from business_rules.alert.alert_service import (ProcessAlertOne, ProcessAlertTwo, ProcessAlertThree, 
+                                                ProcessAlertFour, ProcessAlertFive)
 from fastapi import Depends, status as st
 import logging
-from business_rules.redis.connection import redis as rd
-from business_rules.alert.alert_service import create_alert
+from business_rules.alert.alert_crud import create_alert, get_alert_by_cam_id
 from sqlalchemy.orm import Session
-from main import get_db
+from database import get_db
+from business_rules.view_models.alert_view_model import AlertViewModel
+from models.alert import Alert
 
 logger = logging.getLogger('middleware')
 
@@ -20,19 +19,21 @@ router = APIRouter()
 async def receive_alert_one(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
         url_params = request.query_params._dict
-        current_status = await GetCurrentStatus(camera_id=cam_id)
-        if current_status is not None:
+
+        db_alert: AlertViewModel = get_alert_by_cam_id(cam_id=cam_id, db=db)
+
+        if db_alert is not None:
             return HTTPException(detail="Another process is running", 
                                  status_code=st.HTTP_400_BAD_REQUEST)
         
         # Init the object for the new process
-        create_alert(camera_id=cam_id, db=db)
+        db_alert = create_alert(camera_id=cam_id, db=db)
         
         # Process the Alert 1
-        current_status = await GetCurrentStatus(camera_id=cam_id)
-        result = await ProcessAlertOne(db=db, alert_status=current_status, camera_id=cam_id, params=url_params)
+        result = await ProcessAlertOne(db=db, alert_status=db_alert.status, camera_id=cam_id, params=url_params)
         return result
     except Exception as ex:
+        print(f'Alert 1: {str(ex)}')
         raise HTTPException(status_code=400, detail="receive_alert_one not work")
 
 @router.get("/receive-alert-2/{cam_id}")
@@ -74,3 +75,15 @@ async def receive_alert_five(request: Request, cam_id):
 @router.get('/free')
 def free():
     return Response(content='a', status_code=200)
+
+@router.get('/alert/{cam_id}')
+def free(cam_id, db: Session = Depends(get_db)):
+    alert = get_alert_by_cam_id(cam_id=cam_id, db=db)
+    alert_item = db.query(Alert).filter(Alert.id > 0).all()
+    return Response(content=str([alert]), status_code=200)
+
+@router.post('/delete-alert/{cam_id}')
+def free(cam_id, db: Session = Depends(get_db)):
+    alert = get_alert_by_cam_id(cam_id=cam_id, db=db)
+    alert_item = db.query(Alert).filter(Alert.id > 0).all()
+    return Response(content=str([alert]), status_code=200)

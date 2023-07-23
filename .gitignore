@@ -3,3 +3,4 @@ Pipfile.lock
 # year, tmp log file 
 202* 
 tmp
+__pycache__

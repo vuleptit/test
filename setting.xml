@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Time in seconds -->
-<httppush resettime="3600">
+<httppush resettime="5">
 <alert1>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>

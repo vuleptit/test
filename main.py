@@ -1,24 +1,13 @@
-
-import time
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 import datetime
 from datetime import timedelta
 from api import middleware_api
 from contextlib import asynccontextmanager
-from common.utils.init_config import save_configuration
-from common.utils.scheduler_helper import TriggerHTTP, scheduler
+from common.utils.scheduler_helper import scheduler
 from common.utils.file_helper import delete_dir
 import os
-from .database import SessionLocal
+from database import SessionLocal
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# save configuration to redis when start middleware
 @asynccontextmanager
 async def lifespan(app: FastAPI):
 

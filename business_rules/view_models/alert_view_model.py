@@ -9,5 +9,5 @@ class AlertViewModel(BaseModel):
     status: AlertStatus
     time_to_live: datetime
     created_date: datetime
-    cooling_end_time = Union[datetime, None] = None
+    cooling_end_time: Union[None, datetime] = None
     time_triggered: int = 0

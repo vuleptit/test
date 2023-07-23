@@ -7,8 +7,8 @@ from database import Base
 class Alert(Base):
     __tablename__ = "alert"
 
-    id = Column(Integer, primary_key=True)
-    camera_id = Column(String, unique=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    camera_id = Column(String)
     created_date = Column(DateTime)
     time_to_live = Column(DateTime)
     status = Column(Enum(AlertStatus))

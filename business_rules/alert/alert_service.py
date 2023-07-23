@@ -1,26 +1,19 @@
-from business_rules.redis.connection import redis as rd
-from common.const import (ALERT_CONFIG_OBJ, AlertStatus, AlertName, 
-                          COOLING_PERIOD_OBJ, COOLING_PERIOD_TIME, MAX_EXECUTION_TIME,
-                          CURRENT_STATUS, StatusField, TIME_TO_RESET_CYCLE, 
+from common.const import (AlertStatus, AlertName, TIME_TO_RESET_CYCLE, 
                           INTERVAL_1, INTERVAL_2, INTERVAL_3, INTERVAL_4, INTERVAL_5, 
                           LIMITED_TRIGGER_1, LIMITED_TRIGGER_2, LIMITED_TRIGGER_3, 
-                          LIMITED_TRIGGER_4, LIMITED_TRIGGER_5, CLOSE_MODE_2, 
-                          CLOSE_MODE_3, CLOSE_MODE_4, CLOSE_MODE_5, DEFAULT_EXCEPTION_MESSAGE,
-                          IS_DISABLED_1, IS_DISABLED_2, IS_DISABLED_3, IS_DISABLED_4, IS_DISABLED_5,
-                          REMOVE_RECORD_JOB_PREFIX)
+                          LIMITED_TRIGGER_4, LIMITED_TRIGGER_5, DEFAULT_EXCEPTION_MESSAGE,
+                          IS_DISABLED_1, IS_DISABLED_2, IS_DISABLED_3, REMOVE_RECORD_JOB_PREFIX)
 from fastapi import HTTPException
 from fastapi import status
 from common.utils.datetime_helper import GetCurrentTime, GetTimeAfterSecond
-from common.utils.random_helper import rand_id
 from common.utils.scheduler_helper import TriggerHTTP, scheduler, remove_status_obj
 from business_rules.logging.logging_service import write_log
-import logging
-import pickle
 import datetime
-from view_models.alert_view_model import AlertViewModel
+from business_rules.view_models.alert_view_model import AlertViewModel
 from sqlalchemy.orm import Session
 from models.alert import Alert
-from business_rules.alert.alert_service import get_alert_by_cam_id
+from business_rules.alert.alert_crud import get_alert_by_cam_id
+from business_rules.alert.alert_crud import *
     
 async def GetCoolingPeriod(db: Session, camera_id) -> AlertStatus:
     try:
@@ -48,16 +41,6 @@ async def IsFreeFromCoolingPeriod(db: Session, alert_item: AlertViewModel):
         write_log(log_str=f"Exception from IsFreeFromCoolingPeriod method: {str(ex)}", camera_id=alert_item.camera_id)
         raise HTTPException(status_code=400, detail="Exception on checking Cooling period") 
 
-async def GetCurrentStatus(db: Session, camera_id: str):
-    try:
-        db_alert: Alert = get_alert_by_cam_id(db=db, cam_id=camera_id)
-        if db_alert is not None:
-            return db_alert.status
-        raise HTTPException(status_code=400, detail="No record found for the camera")
-    except Exception as exc:
-        write_log(log_str=f"Exception from GetCurrentStatus: {str(exc)}")
-        return "GetCurrentStatus() not work"
-    
 # Keep the job alive until done
 async def KeepJobAlive(db: Session, interval, limited, camera_id: str):
     try:
@@ -91,7 +74,7 @@ async def ProcessAlertOne(db: Session, alert_status, camera_id, params):
                 write_log(log_str="ProcessAlertOne: Update status of the camera record fails", camera_id=camera_id)
                 raise HTTPException(status_code=400, detail="Update status of the camera record fails")
             
-            await KeepJobAlive(interval=INTERVAL_1, limited=LIMITED_TRIGGER_1, camera_id=camera_id)
+            await KeepJobAlive(interval=INTERVAL_1, limited=LIMITED_TRIGGER_1, camera_id=camera_id, db=db)
 
             # Scheduler job to trigger http
             trigger_job_random_id = f'alert1_http_job_{camera_id}'
@@ -111,6 +94,7 @@ async def ProcessAlertOne(db: Session, alert_status, camera_id, params):
             return HTTPException(detail="The process is not opening for the Alert one", 
                                  status_code=status.HTTP_400_BAD_REQUEST)
     except Exception as ex:
+        print(f'Alert 1: {str(ex)}')
         write_log(log_str=f'Exception from ProcessAlertOne: {str(ex)}', camera_id=camera_id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
     
@@ -135,7 +119,7 @@ async def ProcessAlertTwo(camera_id, params, db: Session):
         if db_alert.status == AlertStatus.OPEN_2.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 2"
             update_alert_status(db=db, camera_id=camera_id, new_status=AlertStatus.PROCESSING_2)
-            await KeepJobAlive(interval=INTERVAL_2, limited=LIMITED_TRIGGER_2, camera_id=camera_id)
+            await KeepJobAlive(interval=INTERVAL_2, limited=LIMITED_TRIGGER_2, camera_id=camera_id, db=db)
 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert2_http_job_{camera_id}'
@@ -174,7 +158,7 @@ async def ProcessAlertThree(camera_id, params, db: Session):
         if db_alert.status == AlertStatus.OPEN_3.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 3"
             update_alert_status(db=db, camera_id=camera_id, new_status=AlertStatus.PROCESSING_3)
-            await KeepJobAlive(interval=INTERVAL_3, limited=LIMITED_TRIGGER_3, camera_id=camera_id)
+            await KeepJobAlive(interval=INTERVAL_3, limited=LIMITED_TRIGGER_3, camera_id=camera_id, db=db)
 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert3_http_job_{camera_id}'
@@ -209,7 +193,7 @@ async def ProcessAlertFour(camera_id, params, db: Session):
         if db_alert.status == AlertStatus.OPEN_4.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 4"
             update_alert_status(db=db, camera_id=camera_id, new_status=AlertStatus.PROCESSING_4)
-            await KeepJobAlive(interval=INTERVAL_4, limited=LIMITED_TRIGGER_4, camera_id=camera_id)
+            await KeepJobAlive(interval=INTERVAL_4, limited=LIMITED_TRIGGER_4, camera_id=camera_id, db=db)
 
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert4_http_job_{camera_id}'
@@ -245,7 +229,7 @@ async def ProcessAlertFive(camera_id, params, db: Session):
         if db_alert.status == AlertStatus.OPEN_5.value and is_not_cooling is True:
             # Set the status to "Processing for the alert 5"
             update_alert_status(db=db, camera_id=camera_id, new_status=AlertStatus.PROCESSING_5)
-            await KeepJobAlive(interval=INTERVAL_5, limited=LIMITED_TRIGGER_5, camera_id=camera_id)
+            await KeepJobAlive(interval=INTERVAL_5, limited=LIMITED_TRIGGER_5, camera_id=camera_id, db=db)
             # Create scheduler job to trigger http
             trigger_job_random_id = f'alert5_http_job_{camera_id}'
             scheduler.add_job(TriggerHTTP, 'interval', seconds=INTERVAL_5,
@@ -259,80 +243,3 @@ async def ProcessAlertFive(camera_id, params, db: Session):
     except Exception as ex:
         write_log(log_str=f'Exception from ProcessAlertFive: {str(ex)}', camera_id=camera_id)
         raise HTTPException(detail=DEFAULT_EXCEPTION_MESSAGE, status_code=status.HTTP_400_BAD_REQUEST)
-    
-# CRUD
-async def get_alert_by_id(db: Session, id: int) -> AlertViewModel:
-    return db.query(Alert).filter(Alert.id == id).first()
-
-async def get_alert_by_cam_id(db: Session, cam_id: int) -> Alert:
-    alert_item = db.query(Alert).filter(Alert.camera_id == cam_id).first()
-    if alert_item is None: 
-        raise HTTPException(status_code=400, detail=f"Cannot find the record for the camera {cam_id}")
-    return AlertViewModel(alert_item)
-
-async def update_alert(db: Session, alert: AlertViewModel):
-    try:
-        alert_in_db: Alert = get_alert_by_cam_id()
-        if alert_in_db == None:
-            return None
-
-        alert_in_db.status = alert.status
-        alert_in_db.time_to_live = alert.time_to_live
-        alert_in_db.time_triggered = alert.time_triggered
-        db.commit()
-        db.refresh(alert_in_db)
-        return alert_in_db
-    except Exception as exc:
-        write_log(f"Exception from update_alert: {str(exc)}")
-
-async def create_alert(db: Session, camera_id: str):
-    try:
-        # Delete the alerts that are out of date
-        out_of_date_alerts = db.query(Alert).filter(Alert.time_to_live <= datetime.datetime.utcnow())
-        if out_of_date_alerts is not None and len(out_of_date_alerts) > 0:
-            db.delete(out_of_date_alerts)
-            db.commit()
-
-        ttl_in_second = TIME_TO_RESET_CYCLE
-
-        alert = Alert()
-        alert.created_date = datetime.datetime.utcnow()
-        alert.camera_id = camera_id
-        alert.time_triggered = 0
-        alert.time_to_live = datetime.datetime.utcnow + datetime.timedelta(seconds=ttl_in_second)
-        alert.status = AlertStatus.OPEN_1
-        alert.cooling_end_time = None
-
-        db.commit()
-        db.refresh(alert)
-        return alert
-    except Exception as exc:
-        write_log(f"Exception from update_alert: {str(exc)}")
-        return None
-
-async def remove_alert(db: Session, camera_id: str) -> bool:
-    try:
-        db_alert = get_alert_by_cam_id(cam_id=camera_id)
-        if db_alert is not None:
-            db.delete(db_alert)
-            db.commit()
-        return True
-    except Exception as exc:
-        write_log(f"Exception from remove_alert: {str(exc)}")
-        return False
-
-async def update_alert_status(db: Session, camera_id: str, new_status: AlertStatus) -> bool:
-    try:
-        alert_item = db.query(Alert).filter(Alert.camera_id == camera_id).first()
-
-        if alert_item is None:
-            return False
-        
-        alert_item.status = new_status
-        db.commit()
-        return True
-    except Exception as exc:
-        write_log(f"Exception from update_alert_status: {str(exc)}")
-        return False
-
-# END: CRUD
