@@ -12,12 +12,18 @@ from common.const import (CURRENT_STATUS, LIMITED_TRIGGER_1, StatusField,
 from business_rules.logging.logging_service import write_log
 from business_rules.alert.alert_crud import (remove_alert, update_alert, get_alert_by_cam_id)
 from sqlalchemy.orm import Session
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from database import SessionLocal
 from datetime import datetime, timedelta
 from business_rules.view_models.alert_view_model import AlertViewModel
 
-scheduler = AsyncIOScheduler()
+jobstores = {
+    'default': SQLAlchemyJobStore(url='sqlite:///jobs.sqlite')
+}
+
+scheduler = AsyncIOScheduler(jobstores=jobstores)
 scheduler.start()
+
 
 async def SetCoolingPeriod(camera_id: str):
     try:
@@ -25,29 +31,31 @@ async def SetCoolingPeriod(camera_id: str):
 
         db_alert: AlertViewModel = get_alert_by_cam_id(db=db, cam_id=camera_id)
         db_alert.status = AlertStatus.COOLING
-
-        cooling_end_time = datetime.utcnow() + timedelta(seconds=COOLING_PERIOD_TIME)
+        db_alert.time_triggered = 0
+        cooling_end_time = datetime.utcnow() + timedelta(seconds=int(COOLING_PERIOD_TIME))
         db_alert.cooling_end_time = cooling_end_time
 
+
         result = update_alert(db=db, alert=db_alert)
+
         if result is not None:
             write_log(
             log_str=f"The cooling period for the camera {camera_id} "
-                    + f"has been set to the time: {cooling_end_time.strftime('%d/%m/%y %H:%M:%s')}"
+                    + f"has been set to the time: {cooling_end_time.strftime('%D/%m/%y %H:%M:%S')}"
                     + f"\nCooling period length: {COOLING_PERIOD_TIME} second(s)"
                     + f"\Result: Success", 
-            camera_id=id)
+            camera_id=camera_id)
         else:
             write_log(
             log_str=f"The cooling period for the camera {camera_id} "
-                    + f"has been set to the time: {cooling_end_time.strftime('%d/%m/%y %H:%M:%s')}"
+                    + f"has been set to the time: {cooling_end_time.strftime('%D/%m/%y %H:%M:S')}"
                     + f"\nCooling period length: {COOLING_PERIOD_TIME} second(s)"
                     + f"\nResult: Fail", 
-            camera_id=id)
+            camera_id=camera_id)
         
         return result
     except Exception as ex:
-        write_log(log_str=f"Exception from SetCoolingPeriod method: {str(ex)}", camera_id=id)
+        write_log(log_str=f"Exception from SetCoolingPeriod method: {str(ex)}", camera_id=camera_id)
         return DEFAULT_EXCEPTION_MESSAGE
     finally:
         db.close()
@@ -91,8 +99,6 @@ async def TriggerHTTP(data):
 
         db_alert: AlertViewModel = get_alert_by_cam_id(db=db, cam_id=cam_id)
 
-        print(f'aaaa: {db_alert == None}')
-
         current_trigger_time = db_alert.time_triggered
 
         write_log(log_str=f"""
@@ -114,23 +120,26 @@ Endpoint: {ENDPOINT_URL}
 Response: {str(res)}""", camera_id=cam_id)
         
         db_alert.time_triggered += 1
+
+        print(f'trigger http: {db_alert == None} with camid = {cam_id} and limited = {limited} and time triggered: {db_alert.time_triggered}')
+
         update_alert(db=db, alert=db_alert)
 
         if db_alert.time_triggered >= limited:
             if alert_name == AlertName.ALERT5:
                 # Delete object when the Alert 5 process is done
                 remove_alert(db=db, camera_id=cam_id)
-                # scheduler.remove_job(job_id=job_id)
+                scheduler.remove_job(job_id=job_id)
+                scheduler.remove_job(job_id=f'remove_record_job_{cam_id}')
                 return    
             
             scheduler.remove_job(job_id=job_id)
 
-            if alert_name == AlertName.ALERT1:
-                if IS_COOLING_STATUS_ENABLED:
-                    await SetCoolingPeriod(id=cam_id)
-
-            next_status = await get_next_status(alert_name, cam_id=cam_id, db=db)
-            
+            if alert_name == AlertName.ALERT1 and IS_COOLING_STATUS_ENABLED:
+                await SetCoolingPeriod(camera_id=cam_id)
+                return
+        
+            next_status = await get_next_status(alert_name, cam_id=cam_id)
             # Update STATUS
             db_alert.status = next_status
             db_alert.time_triggered = 0

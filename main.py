@@ -13,10 +13,15 @@ async def lifespan(app: FastAPI):
 
     path = f"{os.getcwd()}/logs"
 
-    scheduler.add_job(delete_dir, 'cron', day_of_week='fri', 
+    remove_log_job_id = "clear_logs_job"
+    remove_log_job = scheduler.get_job(job_id=remove_log_job_id)
+
+    if remove_log_job is None: 
+        scheduler.add_job(delete_dir, 'cron', day_of_week='fri', 
                       hour=0, minute=0, 
                       args=[path],
-                      start_date=datetime.datetime.today())
+                      start_date=datetime.datetime.today(),
+                      id="clear_logs_job")
     
     yield
     # handler.doRollover()

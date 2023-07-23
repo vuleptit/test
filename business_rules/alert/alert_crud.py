@@ -26,6 +26,7 @@ def update_alert(db: Session, alert: AlertViewModel):
         alert_in_db.status = alert.status
         alert_in_db.time_to_live = alert.time_to_live
         alert_in_db.time_triggered = alert.time_triggered
+        alert_in_db.cooling_end_time = alert.cooling_end_time
         db.commit()
         db.refresh(alert_in_db)
         return alert_in_db
@@ -34,13 +35,6 @@ def update_alert(db: Session, alert: AlertViewModel):
 
 def create_alert(db: Session, camera_id: str):
     try:
-        # Delete the alerts that are out of date
-        current_time = datetime.datetime.utcnow()
-        out_of_date_alerts = db.query(Alert).filter(Alert.time_to_live <= current_time)
-        if out_of_date_alerts is not None and out_of_date_alerts.count() > 0:
-            out_of_date_alerts.delete()
-            db.commit()
-
         ttl_in_second = TIME_TO_RESET_CYCLE
 
         alert = Alert()
@@ -62,9 +56,9 @@ def create_alert(db: Session, camera_id: str):
 
 def remove_alert(db: Session, camera_id: str) -> bool:
     try:
-        db_alert = get_alert_by_cam_id(cam_id=camera_id)
-        if db_alert is not None:
-            db.delete(db_alert)
+        alerts_query = db.query(Alert).filter(Alert.camera_id == camera_id)
+        if alerts_query is not None and alerts_query.count() > 0:
+            alerts_query.delete()
             db.commit()
         return True
     except Exception as exc:
@@ -84,6 +78,14 @@ def update_alert_status(db: Session, camera_id: str, new_status: AlertStatus) ->
     except Exception as exc:
         write_log(f"Exception from update_alert_status: {str(exc)}")
         return False
+    
+def remove_out_of_date_record(db: Session):
+    # Delete the alerts that are out of date
+    current_time = datetime.datetime.utcnow()
+    out_of_date_alerts = db.query(Alert).filter(Alert.time_to_live <= current_time)
+    if out_of_date_alerts is not None and out_of_date_alerts.count() > 0:
+        out_of_date_alerts.delete()
+        db.commit()
     
 def map_to_view_model(alert: Alert):
     if alert is None:

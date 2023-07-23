@@ -5,11 +5,12 @@ from business_rules.alert.alert_service import (ProcessAlertOne, ProcessAlertTwo
                                                 ProcessAlertFour, ProcessAlertFive)
 from fastapi import Depends, status as st
 import logging
-from business_rules.alert.alert_crud import create_alert, get_alert_by_cam_id
+from business_rules.alert.alert_crud import create_alert, get_alert_by_cam_id, remove_out_of_date_record
 from sqlalchemy.orm import Session
 from database import get_db
 from business_rules.view_models.alert_view_model import AlertViewModel
 from models.alert import Alert
+from common.utils.scheduler_helper import scheduler
 
 logger = logging.getLogger('middleware')
 
@@ -18,6 +19,8 @@ router = APIRouter()
 @router.get("/receive-alert-1/{cam_id}")
 async def receive_alert_one(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
+        remove_out_of_date_record(db=db)
+
         url_params = request.query_params._dict
 
         db_alert: AlertViewModel = get_alert_by_cam_id(cam_id=cam_id, db=db)
@@ -39,35 +42,46 @@ async def receive_alert_one(request: Request, cam_id, db: Session = Depends(get_
 @router.get("/receive-alert-2/{cam_id}")
 async def receive_alert_two(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
+        remove_out_of_date_record(db=db)
+
         url_params = request.query_params._dict
         result = await ProcessAlertTwo(camera_id=cam_id, params=url_params, db=db)
         return result
     except Exception as ex:
+        print(f'Alert 2: {str(ex)}')
         raise HTTPException(status_code=400, detail="receive_alert_two not work")
 
 @router.get("/receive-alert-3/{cam_id}")
 async def receive_alert_three(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
+        remove_out_of_date_record(db=db)
+
         url_params = request.query_params._dict
-        result = await ProcessAlertThree(id=cam_id, params=url_params, db=db)
+        result = await ProcessAlertThree(camera_id=cam_id, params=url_params, db=db)
         return result
     except Exception as ex:
+        print(f'Alert 3: {str(ex)}')
         raise HTTPException(status_code=400, detail="receive_alert_3 not work")
 
 @router.get("/receive-alert-4/{cam_id}")
-async def receive_alert_four(request: Request, cam_id):
+async def receive_alert_four(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
+        remove_out_of_date_record(db=db)
+        
         url_params = request.query_params._dict
-        result = await ProcessAlertFour(id=cam_id, params=url_params)
+        result = await ProcessAlertFour(camera_id=cam_id, params=url_params, db=db)
         return result
     except Exception as ex:
+        print(f'Alert 4: {str(ex)}')
         raise HTTPException(status_code=400, detail="receive_alert_4 not work")
 
 @router.get("/receive-alert-5/{cam_id}")
-async def receive_alert_five(request: Request, cam_id):
+async def receive_alert_five(request: Request, cam_id, db: Session = Depends(get_db)):
     try:
+        remove_out_of_date_record(db=db)
+
         url_params = request.query_params._dict
-        result = await ProcessAlertFive(id=cam_id, params=url_params)
+        result = await ProcessAlertFive(camera_id=cam_id, params=url_params, db=db)
         return result
     except Exception as ex:
         raise HTTPException(status_code=400, detail="receive_alert_5 not work")
@@ -87,3 +101,16 @@ def free(cam_id, db: Session = Depends(get_db)):
     alert = get_alert_by_cam_id(cam_id=cam_id, db=db)
     alert_item = db.query(Alert).filter(Alert.id > 0).all()
     return Response(content=str([alert]), status_code=200)
+
+
+@router.get('/get-list-jobs')
+async def list_job():
+    lst_jobs = scheduler.get_jobs()
+    return Response(content=str(lst_jobs), status_code=200)
+
+
+@router.get('/remove-job/{job_id}')
+def free(job_id):
+    scheduler.remove_job(job_id)
+    lst_jobs = scheduler.get_jobs()
+    return Response(content=str(lst_jobs), status_code=200)

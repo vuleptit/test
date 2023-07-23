@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!-- Time in seconds -->
-<httppush resettime="5">
+<httppush resettime="3600">
 <alert1>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
     <disable>False</disable> <!--True or False-->
     <!-- have not use time to activate yet -->
-    <alarmcoolingperiod interval="10" timetoactivate="90">True</alarmcoolingperiod>
+    <alarmcoolingperiod interval="30" timetoactivate="90">True</alarmcoolingperiod>
 </alert1>
 <alert2>
     <repeat>3</repeat>
     <timeinterval>3</timeinterval>
-    <disable>False</disable> <!--True or False-->
+    <disable>True</disable> <!--True or False-->
     <closemode>close</closemode>
 </alert2>
 <alert3>
@@ -32,5 +32,5 @@
     <disable>False</disable> <!--True or False-->
     <closemode>open</closemode>
 </alert5>
-<endpoint>http://admin:Sentry!256@192.168.1.210:7001/api/createEvent</endpoint>
+<endpoint>localhost://trigger/free</endpoint>
 </httppush>

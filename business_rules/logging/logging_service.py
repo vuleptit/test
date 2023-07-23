@@ -1,5 +1,3 @@
-import time
-import logging
 import logging.handlers
 import datetime
 import os
